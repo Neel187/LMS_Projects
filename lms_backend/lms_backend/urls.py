@@ -14,6 +14,7 @@ router.register(r'saved-views', SavedViewViewSet, basename='saved-view')
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
+    path('api/auth/', include('apps.authentication.urls')),
     
     # Direct Meta Connect OAuth Endpoints
     path('api/meta/oauth-url/', MetaOAuthURLView.as_view(), name='meta-oauth-url'),

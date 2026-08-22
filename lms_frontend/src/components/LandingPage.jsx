@@ -1,181 +1,290 @@
-import React, { useState } from 'react';
-import { 
-  Sparkles, Share2, Layers, ShieldCheck, Zap, ArrowRight, CheckCircle2, 
-  Users, Filter, PhoneCall, TrendingUp, BarChart3, Database, Lock, Globe 
-} from 'lucide-react';
-import AuthModal from './AuthModal';
+import React, { useState } from "react";
+import {
+  Sparkles,
+  Share2,
+  Layers,
+  ShieldCheck,
+  Zap,
+  ArrowRight,
+  CheckCircle2,
+  Users,
+  Filter,
+  PhoneCall,
+  TrendingUp,
+  BarChart3,
+  Database,
+  Lock,
+  Globe,
+} from "lucide-react";
+import AuthModal from "./AuthModal";
 
-export default function LandingPage({ onLoginSuccess }) {
+export default function LandingPage({ onLoginSuccess, onToast }) {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   return (
-    <div style={{ minHeight: '100vh', background: 'var(--bg-dark)', color: 'var(--text-main)', display: 'flex', flexDirection: 'column', overflowX: 'hidden' }}>
-      
-      {/* Public Landing Navbar */}
-      <header className="glass-panel" style={{ borderRadius: 0, borderTop: 0, borderLeft: 0, borderRight: 0, padding: '16px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 50, position: 'sticky', top: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          <div style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)', width: '40px', height: '40px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem', boxShadow: '0 0 16px rgba(59,130,246,0.5)' }}>
+    <div className="min-h-screen bg-[#0b0f19] text-slate-300 flex flex-col overflow-x-hidden selection:bg-blue-500/30">
+      {/* --- Public Landing Navbar --- */}
+      <header className="sticky top-0 z-50 glass-panel border-t-0 border-x-0 border-b border-white/5 bg-[rgba(11,15,25,0.85)] backdrop-blur-md px-4 sm:px-8 py-4 flex items-center justify-between">
+        {/* Logo */}
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-xl shadow-[0_0_16px_rgba(59,130,246,0.4)]">
             ⚡
           </div>
-          <div>
-            <h1 style={{ fontSize: '1.35rem', fontWeight: 800, background: 'linear-gradient(to right, #ffffff, #93c5fd)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          <div className="hidden sm:block">
+            <h1 className="text-lg sm:text-xl font-extrabold bg-gradient-to-r from-white to-blue-300 bg-clip-text text-transparent leading-tight">
               PioneerTech LMS
             </h1>
-            <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-              Operating System for Businesses That Generate Leads Online
+            <p className="text-[10px] sm:text-[11px] text-slate-500 leading-tight -mt-0.5">
+              Lead Management OS
             </p>
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '24px', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-          <a href="#specs" style={{ color: 'inherit', textDecoration: 'none' }}>Specifications</a>
-          <a href="#usecases" style={{ color: 'inherit', textDecoration: 'none' }}>Use Cases & Benefits</a>
-          <a href="#howitworks" style={{ color: 'inherit', textDecoration: 'none' }}>How It Works</a>
-        </div>
+        {/* Desktop Navigation Links */}
+        <nav className="hidden lg:flex items-center gap-6 text-sm font-medium text-slate-400">
+          <a href="#specs" className="hover:text-white transition-colors">
+            Specifications
+          </a>
+          <a href="#usecases" className="hover:text-white transition-colors">
+            Use Cases
+          </a>
+          <a href="#howitworks" className="hover:text-white transition-colors">
+            How It Works
+          </a>
+        </nav>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+        {/* Action Buttons */}
+        <div className="flex items-center gap-3">
           <button
-            className="login-btn-signin"
             onClick={() => setIsAuthModalOpen(true)}
+            className="hidden sm:inline-block px-5 py-2 text-sm font-medium text-slate-300 hover:text-white border border-white/10 hover:border-white/30 rounded-lg transition-all"
           >
             Sign In
           </button>
-          
-          <button className="login-btn-cta" onClick={() => setIsAuthModalOpen(true)}>
-            <Sparkles size={16} />
-            <span>Get Started Free</span>
+
+          <button
+            onClick={() => setIsAuthModalOpen(true)}
+            className="flex items-center gap-2 px-4 sm:px-6 py-2 sm:py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-500 hover:to-blue-400 rounded-lg shadow-lg shadow-blue-500/25 transition-all"
+          >
+            <Sparkles size={16} className="hidden sm:block" />
+            <span>Get Started</span>
           </button>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section style={{ padding: '80px 20px 60px 20px', textAlign: 'center', maxWidth: '1000px', margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px' }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)', padding: '6px 16px', borderRadius: '30px', color: '#60a5fa', fontSize: '0.85rem', fontWeight: 600 }}>
-          <Zap size={15} /> Not another CRM — The Lead Generation Operating System
+      {/* --- Hero Section --- */}
+      <section className="pt-20 sm:pt-28 pb-16 sm:pb-24 px-4 text-center max-w-4xl mx-auto flex flex-col items-center gap-6">
+        <div className="inline-flex items-center gap-2 bg-blue-500/10 border border-blue-500/20 px-4 py-1.5 rounded-full text-blue-400 text-xs sm:text-sm font-semibold">
+          <Zap size={14} />
+          Not another CRM — The Lead Gen OS
         </div>
 
-        <h1 style={{ fontSize: '3.2rem', fontWeight: 800, lineHeight: 1.15, background: 'linear-gradient(to right, #ffffff, #93c5fd, #c084fc)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-          Every Lead Ingested Automatically, Deduplicated Intelligently & Ready for Instant Follow-up.
+        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight bg-gradient-to-r from-white via-blue-200 to-purple-300 bg-clip-text text-transparent">
+          Every Lead Ingested Automatically, <br className="hidden sm:block" />
+          Deduplicated & Ready for Follow-up.
         </h1>
 
-        <p style={{ fontSize: '1.15rem', color: 'var(--text-muted)', maxWidth: '760px', lineHeight: 1.6 }}>
-          Stop losing leads between Meta Ads, Instant Forms, CSVs, and sales reps. PioneerTech LMS unifies your lead acquisition channels, deduplicates unique contacts, and eliminates training bloat so reps are productive in under 30 minutes.
+        <p className="text-sm sm:text-base md:text-lg text-slate-400 max-w-2xl leading-relaxed">
+          Stop losing leads between Meta Ads, Instant Forms, CSVs, and sales
+          reps. PioneerTech LMS unifies your acquisition channels, deduplicates
+          unique contacts, and gets reps productive in under 30 minutes.
         </p>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginTop: '12px' }}>
-          <button className="login-btn-cta" onClick={() => setIsAuthModalOpen(true)} style={{ padding: '16px 32px', fontSize: '1.05rem' }}>
-            <span>Launch Live LMS Workspace</span>
+        <div className="flex flex-col sm:flex-row items-center gap-4 mt-4 w-full sm:w-auto">
+          <button
+            onClick={() => setIsAuthModalOpen(true)}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 text-base font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 rounded-xl shadow-lg shadow-blue-600/30 transition-all"
+          >
+            <span>Launch Live Workspace</span>
             <ArrowRight size={18} />
           </button>
 
-          <button className="login-btn-social" onClick={() => setIsAuthModalOpen(true)}>
+          <button
+            onClick={() => setIsAuthModalOpen(true)}
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 text-base font-medium text-slate-300 hover:text-white border border-white/10 hover:border-white/30 rounded-xl transition-all"
+          >
             <Share2 size={18} />
-            <span>Sign In with Google / Meta</span>
+            <span>Sign In with SSO</span>
           </button>
         </div>
       </section>
 
-      {/* Feature Specs Grid */}
-      <section id="specs" style={{ padding: '60px 40px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
-        <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-          <h2 style={{ fontSize: '2rem', fontWeight: 700, color: 'white' }}>Product Specifications & Core Architecture</h2>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '8px' }}>Built on Django REST Framework, React Vite, and a hybrid MySQL + MongoDB data store</p>
+      {/* --- Feature Specs Grid --- */}
+      <section
+        id="specs"
+        className="py-16 sm:py-20 px-4 sm:px-8 max-w-6xl mx-auto w-full"
+      >
+        <div className="text-center mb-12">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white">
+            Product Specifications
+          </h2>
+          <p className="text-sm sm:text-base text-slate-500 mt-2">
+            Built on Django REST, React Vite, and a hybrid MySQL + MongoDB data
+            store
+          </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
-          
-          <div className="glass-panel" style={{ padding: '28px', borderRadius: '16px' }}>
-            <div style={{ background: 'rgba(59, 130, 246, 0.15)', width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#60a5fa', marginBottom: '16px' }}>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="glass-panel p-6 sm:p-8 rounded-2xl border border-white/5 bg-white/5 hover:bg-white/10 transition-all">
+            <div className="w-12 h-12 rounded-xl bg-blue-500/15 text-blue-400 flex items-center justify-center mb-4">
               <Users size={24} />
             </div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'white', marginBottom: '8px' }}>Master Contact Repository</h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-              Read-only master repository of unique contacts. Automatically created and updated whenever a new enquiry is received. Uses intelligent Phone and Email deduplication.
+            <h3 className="text-lg font-bold text-white mb-2">
+              Master Contact Repository
+            </h3>
+            <p className="text-sm text-slate-400 leading-relaxed">
+              Read-only master repository of unique contacts. Automatically
+              created using intelligent Phone and Email deduplication.
             </p>
           </div>
 
-          <div className="glass-panel" style={{ padding: '28px', borderRadius: '16px' }}>
-            <div style={{ background: 'rgba(24, 119, 242, 0.15)', width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1877f2', marginBottom: '16px' }}>
+          <div className="glass-panel p-6 sm:p-8 rounded-2xl border border-white/5 bg-white/5 hover:bg-white/10 transition-all">
+            <div className="w-12 h-12 rounded-xl bg-[#1877f2]/15 text-[#1877f2] flex items-center justify-center mb-4">
               <Share2 size={24} />
             </div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'white', marginBottom: '8px' }}>Direct Meta Ads Ingestion</h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-              Direct OAuth connection with Meta Graph API. Ingests leads in real-time from Instant Forms, preserving raw field responses (Budget, Location, Property Type) into MongoDB collections.
+            <h3 className="text-lg font-bold text-white mb-2">
+              Direct Meta Ads Ingestion
+            </h3>
+            <p className="text-sm text-slate-400 leading-relaxed">
+              Direct OAuth connection with Meta Graph API. Ingests leads from
+              Instant Forms in real-time into MongoDB collections.
             </p>
           </div>
 
-          <div className="glass-panel" style={{ padding: '28px', borderRadius: '16px' }}>
-            <div style={{ background: 'rgba(168, 85, 247, 0.15)', width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#c084fc', marginBottom: '16px' }}>
+          <div className="glass-panel p-6 sm:p-8 rounded-2xl border border-white/5 bg-white/5 hover:bg-white/10 transition-all">
+            <div className="w-12 h-12 rounded-xl bg-purple-500/15 text-purple-400 flex items-center justify-center mb-4">
               <Filter size={24} />
             </div>
-            <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'white', marginBottom: '8px' }}>Smart Views & Filters</h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-              Prebuilt grouped views (All Enquiries, Campaign Wise, Form Wise, Follow-ups Due, Overdue Calls) and custom multi-condition saved views with sidebar pinning.
+            <h3 className="text-lg font-bold text-white mb-2">
+              Smart Views & Filters
+            </h3>
+            <p className="text-sm text-slate-400 leading-relaxed">
+              Prebuilt grouped views (Campaign Wise, Follow-ups Due) and custom
+              multi-condition saved views with sidebar pinning.
             </p>
           </div>
-
         </div>
       </section>
 
-      {/* Use Cases & Benefits */}
-      <section id="usecases" style={{ padding: '60px 40px', background: 'rgba(0,0,0,0.3)', borderTop: '1px solid var(--border-color)', borderBottom: '1px solid var(--border-color)' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-            <h2 style={{ fontSize: '2rem', fontWeight: 700, color: 'white' }}>Industry Use Cases & Measurable Benefits</h2>
-            <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '8px' }}>Designed for sales teams, marketing agencies, and high-volume online lead generators</p>
+      {/* --- Use Cases & Benefits --- */}
+      <section
+        id="usecases"
+        className="py-16 sm:py-20 px-4 sm:px-8 bg-black/30 border-y border-white/5"
+      >
+        <div className="max-w-6xl mx-auto w-full">
+          <div className="text-center mb-12">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white">
+              Industry Use Cases
+            </h2>
+            <p className="text-sm sm:text-base text-slate-500 mt-2">
+              Designed for high-volume online lead generators
+            </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '20px' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {[
-              { title: 'Real Estate Developers', desc: 'Manage property expo leads, Instant Form budget preferences, and villa enquiries without manual entry.' },
-              { title: 'Performance Agencies', desc: 'Direct Meta Ads webhooks track performance per campaign, ad set, and specific instant form.' },
-              { title: 'Financial Services & Insurance', desc: 'Deduplicate client phone numbers instantly to prevent multiple reps from calling the same prospect.' },
-              { title: 'E-Commerce & High-Ticket B2B', desc: 'Track sales rep response time, schedule follow-up calls, and measure conversion ratios per source.' }
+              {
+                title: "Real Estate Developers",
+                desc: "Manage property expo leads and villa enquiries without manual entry.",
+              },
+              {
+                title: "Performance Agencies",
+                desc: "Direct Meta Ads webhooks track performance per campaign and ad set.",
+              },
+              {
+                title: "Financial Services",
+                desc: "Deduplicate client phone numbers instantly to prevent double calls.",
+              },
+              {
+                title: "High-Ticket B2B",
+                desc: "Track sales rep response time and measure conversion ratios per source.",
+              },
             ].map((uc, i) => (
-              <div key={i} className="glass-panel" style={{ padding: '20px', borderRadius: '12px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#34d399', fontSize: '0.85rem', fontWeight: 600, marginBottom: '8px' }}>
-                  <CheckCircle2 size={16} /> Use Case #{i+1}
+              <div
+                key={i}
+                className="glass-panel p-5 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition-all"
+              >
+                <div className="flex items-center gap-2 text-emerald-400 text-xs font-bold mb-2">
+                  <CheckCircle2 size={14} /> Use Case #{i + 1}
                 </div>
-                <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'white', marginBottom: '6px' }}>{uc.title}</h4>
-                <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>{uc.desc}</p>
+                <h4 className="text-base font-bold text-white mb-1">
+                  {uc.title}
+                </h4>
+                <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+                  {uc.desc}
+                </p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* How It Works Flow */}
-      <section id="howitworks" style={{ padding: '60px 40px', maxWidth: '1200px', margin: '0 auto', width: '100%' }}>
-        <div style={{ textAlign: 'center', marginBottom: '48px' }}>
-          <h2 style={{ fontSize: '2rem', fontWeight: 700, color: 'white' }}>How It Works — Step-by-Step Workflow</h2>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginTop: '8px' }}>From lead click to closed conversion in 4 automated steps</p>
+      {/* --- How It Works Flow --- */}
+      <section
+        id="howitworks"
+        className="py-16 sm:py-20 px-4 sm:px-8 max-w-6xl mx-auto w-full"
+      >
+        <div className="text-center mb-12">
+          <h2 className="text-2xl sm:text-3xl font-bold text-white">
+            How It Works
+          </h2>
+          <p className="text-sm sm:text-base text-slate-500 mt-2">
+            From lead click to closed conversion in 4 automated steps
+          </p>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {[
-            { step: '01', title: 'Direct Webhook Ingestion', desc: 'Leads from Meta Instant Forms, CSVs, or web forms trigger automatic real-time API webhooks.' },
-            { step: '02', title: 'AI Contact Deduplication', desc: 'System checks phone/email in master contact repository, updating existing contacts or creating new ones.' },
-            { step: '03', title: 'Smart View Assignment', desc: 'Enquiries are categorized into Smart Views and assigned to primary & secondary sales owners.' },
-            { step: '04', title: 'Instant Follow-up Action', desc: 'Reps use quick action WhatsApp, Call, and Note shortcuts to reach prospects in under 5 minutes.' }
+            {
+              step: "01",
+              title: "Direct Webhook Ingestion",
+              desc: "Leads from Meta Instant Forms trigger automatic real-time API webhooks.",
+            },
+            {
+              step: "02",
+              title: "AI Contact Deduplication",
+              desc: "System checks phone/email in master repository, updating or creating contacts.",
+            },
+            {
+              step: "03",
+              title: "Smart View Assignment",
+              desc: "Enquiries are categorized into Smart Views and assigned to sales owners.",
+            },
+            {
+              step: "04",
+              title: "Instant Follow-up Action",
+              desc: "Reps use WhatsApp, Call, and Note shortcuts to reach prospects instantly.",
+            },
           ].map((item, idx) => (
-            <div key={idx} className="glass-panel" style={{ padding: '24px', borderRadius: '12px', position: 'relative' }}>
-              <span style={{ fontSize: '2rem', fontWeight: 900, color: 'rgba(59, 130, 246, 0.2)', position: 'absolute', right: '16px', top: '16px' }}>{item.step}</span>
-              <h4 style={{ fontSize: '1rem', fontWeight: 700, color: '#93c5fd', marginBottom: '8px' }}>{item.title}</h4>
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.4 }}>{item.desc}</p>
+            <div
+              key={idx}
+              className="glass-panel p-6 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 transition-all relative group"
+            >
+              <span className="absolute right-4 top-4 text-3xl font-black text-blue-500/20 group-hover:text-blue-500/30 transition-colors">
+                {item.step}
+              </span>
+              <h4 className="text-base font-bold text-blue-300 mb-2">
+                {item.title}
+              </h4>
+              <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+                {item.desc}
+              </p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Footer */}
-      <footer style={{ padding: '30px 40px', borderTop: '1px solid var(--border-color)', textAlign: 'center', color: 'var(--text-dim)', fontSize: '0.8rem' }}>
-        © 2026 PioneerTech LMS • Operating System for Businesses That Generate Leads Online
+      {/* --- Footer --- */}
+      <footer className="py-8 px-4 sm:px-8 border-t border-white/5 text-center text-slate-500 text-xs sm:text-sm">
+        © {new Date().getFullYear()} PioneerTech LMS • Operating System for
+        Businesses That Generate Leads Online
       </footer>
 
-      {/* Auth Modal */}
+      {/* --- Auth Modal --- */}
       <AuthModal
         isOpen={isAuthModalOpen}
         onClose={() => setIsAuthModalOpen(false)}
+        onToast={onToast}
         onLoginSuccess={(user) => {
           setIsAuthModalOpen(false);
           onLoginSuccess(user);

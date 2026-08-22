@@ -1,3 +1,5 @@
+@import "tailwindcss";
+
 :root {
   --bg-dark: #0b0f19;
   --bg-card: rgba(18, 24, 38, 0.85);
@@ -25,12 +27,12 @@
   --text-muted: #9ca3af;
   --text-dim: #6b7280;
 }
-
+/* 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-}
+} */
 
 body {
   font-family: 'Inter', sans-serif;

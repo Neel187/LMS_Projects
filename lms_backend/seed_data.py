@@ -12,7 +12,7 @@ from apps.meta_integration.models import MetaAccount, MetaLeadSyncLog
 
 def seed_all():
     print("Seeding LMS database...")
-    
+     
     # 1. Create Admin & Sales Users
     admin_user, _ = User.objects.get_or_create(username='admin', defaults={'email': 'admin@pioneertech.com', 'is_staff': True, 'is_superuser': True})
     admin_user.set_password('admin123')

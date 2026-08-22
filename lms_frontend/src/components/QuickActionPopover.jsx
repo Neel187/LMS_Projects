@@ -1,38 +1,47 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { FileText, Clock, Send, X } from 'lucide-react';
+import React, { useState, useEffect, useRef } from "react";
+import { FileText, Clock, Send, X } from "lucide-react";
+import { apiFetch } from "../api";
 
-export default function QuickActionPopover({ type, enquiryId, anchorRect, onClose, onSaved }) {
-  const [value, setValue] = useState('');
+export default function QuickActionPopover({
+  type,
+  enquiryId,
+  anchorRect,
+  onClose,
+  onSaved,
+}) {
+  const [value, setValue] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const popoverRef = useRef(null);
 
+  // Click outside handler
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (popoverRef.current && !popoverRef.current.contains(e.target)) {
         onClose();
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [onClose]);
 
   const handleSave = async () => {
     if (!value.trim()) return;
     setIsSubmitting(true);
     try {
-      if (type === 'note') {
-        await fetch(`/api/enquiries/${enquiryId}/add_note/`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ note: value })
-        });
-      } else {
-        await fetch(`/api/enquiries/${enquiryId}/schedule_followup/`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ follow_up_date: value })
-        });
-      }
+      const endpoint =
+        type === "note"
+          ? `/api/enquiries/${enquiryId}/add_note/`
+          : `/api/enquiries/${enquiryId}/schedule_followup/`;
+
+      const payload =
+        type === "note" ? { note: value } : { follow_up_date: value };
+
+      await apiFetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
       setIsSubmitting(false);
       if (onSaved) onSaved();
       onClose();
@@ -42,63 +51,75 @@ export default function QuickActionPopover({ type, enquiryId, anchorRect, onClos
     }
   };
 
-  // Position the popover relative to the anchor
-  const style = {};
-  if (anchorRect) {
-    const popoverWidth = 280;
-    const popoverHeight = type === 'note' ? 180 : 140;
-    let top = anchorRect.bottom + 8;
-    let left = anchorRect.left - popoverWidth + anchorRect.width;
-
-    // Keep within viewport
-    if (top + popoverHeight > window.innerHeight) {
-      top = anchorRect.top - popoverHeight - 8;
-    }
-    if (left < 16) left = 16;
-
-    style.top = `${top}px`;
-    style.left = `${left}px`;
-  }
+  // Safety check: prevent crash if anchorRect is missing
+  if (!anchorRect) return null;
 
   return (
-    <div className="quick-action-popover" ref={popoverRef} style={style}>
-      <h4>
-        {type === 'note' ? (
-          <><FileText size={16} style={{ color: '#fbbf24' }} /> Add Note</>
-        ) : (
-          <><Clock size={16} style={{ color: '#c084fc' }} /> Set Reminder</>
-        )}
+    <div
+      ref={popoverRef}
+      className="fixed z-[60] w-[280px] bg-[#1e293b] border border-white/10 rounded-xl shadow-2xl p-4 flex flex-col gap-3 animate-fade-in"
+      style={{
+        top: anchorRect.bottom + 8,
+        left: Math.min(
+          Math.max(anchorRect.left - 280 + anchorRect.width, 16),
+          window.innerWidth - 296,
+        ),
+      }}
+    >
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-white/5 pb-2">
+        <h4 className="text-sm font-semibold text-slate-200 flex items-center gap-2">
+          {type === "note" ? (
+            <FileText size={16} className="text-yellow-400" />
+          ) : (
+            <Clock size={16} className="text-purple-400" />
+          )}
+          {type === "note" ? "Add Note" : "Set Reminder"}
+        </h4>
         <button
           onClick={onClose}
-          style={{ marginLeft: 'auto', background: 'transparent', border: 'none', color: 'var(--text-dim)', cursor: 'pointer', padding: '2px' }}
+          className="p-1 text-slate-500 hover:text-white hover:bg-white/5 rounded-md transition-colors"
         >
           <X size={14} />
         </button>
-      </h4>
+      </div>
 
-      {type === 'note' ? (
-        <textarea
-          placeholder="Type your note..."
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          rows={3}
-          autoFocus
-        />
-      ) : (
-        <input
-          type="datetime-local"
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          autoFocus
-        />
-      )}
+      {/* Input Area */}
+      <div className="flex-1">
+        {type === "note" ? (
+          <textarea
+            placeholder="Type your note..."
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            rows={3}
+            autoFocus
+            className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50 resize-none"
+          />
+        ) : (
+          <input
+            type="datetime-local"
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            autoFocus
+            className="w-full bg-black/40 border border-white/10 rounded-lg p-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500/50"
+          />
+        )}
+      </div>
 
-      <div className="popover-actions">
-        <button className="btn-save" onClick={handleSave} disabled={isSubmitting}>
-          <Send size={12} />
-          {isSubmitting ? 'Saving...' : 'Save'}
+      {/* Actions */}
+      <div className="flex items-center gap-2 mt-1">
+        <button
+          onClick={handleSave}
+          disabled={isSubmitting || !value.trim()}
+          className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Send size={14} />
+          {isSubmitting ? "Saving..." : "Save"}
         </button>
-        <button className="btn-cancel" onClick={onClose}>
+        <button
+          onClick={onClose}
+          className="px-4 py-2 bg-white/5 hover:bg-white/10 text-slate-300 text-sm font-medium rounded-lg transition-colors"
+        >
           Cancel
         </button>
       </div>
