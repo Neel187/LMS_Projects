@@ -1,9 +1,33 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, Search, Bell, User, Share2, Plus, LogOut, ChevronDown, Shield, Settings, UserCircle } from 'lucide-react';
+import React, { useState, useEffect, useRef } from "react";
+import {
+  Search,
+  Bell,
+  User,
+  Share2,
+  Plus,
+  LogOut,
+  ChevronDown,
+  Shield,
+  UserCircle,
+  Menu,
+  X,
+} from "lucide-react";
 
-export default function Navbar({ currentUser, onLogout, onOpenMetaModal, onOpenCreateModal, searchTerm, setSearchTerm, todaysActionCount, onOpenTodaysActions }) {
+export default function Navbar({
+  currentUser,
+  onLogout,
+  onOpenMetaModal,
+  onOpenCreateModal,
+  searchTerm,
+  setSearchTerm,
+  todaysActionCount,
+  onOpenTodaysActions,
+  onToggleMobileMenu,
+  isMobileMenuOpen,
+}) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
+  const [showMobileActions, setShowMobileActions] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -11,180 +35,456 @@ export default function Navbar({ currentUser, onLogout, onOpenMetaModal, onOpenC
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setShowDropdown(false);
         setShowProfile(false);
+        setShowMobileActions(false);
       }
     };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const userRole = currentUser?.role || 'Sales Agent';
-  const roleClass = userRole === 'Admin' ? 'admin' : 'sales';
+  const userRole = currentUser?.role || "Employee";
+  const isAdmin = userRole.toLowerCase() === "admin";
 
   return (
-    <header className="glass-panel" style={{ borderRadius: 0, borderTop: 0, borderLeft: 0, borderRight: 0, padding: '12px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', zIndex: 50, position: 'sticky', top: 0 }}>
-      {/* Brand & Tagline */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-        <div style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)', width: '38px', height: '38px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', fontSize: '1.2rem', boxShadow: '0 0 15px rgba(59,130,246,0.5)' }}>
-          ⚡
+    <header className="bg-[rgba(11,15,25,0.95)] border-b border-[rgba(255,255,255,0.06)] sticky top-0 z-40 px-4 py-3 md:px-6 md:py-3">
+      <div className="flex items-center justify-between">
+        {/* Brand - Desktop */}
+        <div className="hidden md:flex items-center gap-4">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-500/30">
+            ⚡
+          </div>
+          <div>
+            <h1 className="text-lg font-bold bg-gradient-to-r from-white to-blue-300 bg-clip-text text-transparent">
+              PioneerTech LMS
+            </h1>
+            <p className="text-xs text-[#64748b]">
+              Lead OS • Deduplicated & Ready for Instant Follow-up
+            </p>
+          </div>
         </div>
-        <div>
-          <h1 style={{ fontSize: '1.25rem', fontWeight: 700, background: 'linear-gradient(to right, #ffffff, #93c5fd)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            PioneerTech LMS
-          </h1>
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            Lead OS • Deduplicated & Ready for Instant Follow-up
-          </p>
+
+        {/* Search - Desktop */}
+        <div className="hidden md:block flex-1 max-w-md mx-4">
+          <div className="relative">
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-[#64748b]"
+            />
+            <input
+              type="text"
+              placeholder="Global search (Contacts, Enquiries, Phone, Campaign)..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full py-2 pl-10 pr-4 bg-[rgba(0,0,0,0.3)] border border-[rgba(255,255,255,0.06)] rounded-lg text-white text-sm placeholder-[#64748b] focus:outline-none focus:border-blue-500/50 transition-colors"
+            />
+          </div>
         </div>
-      </div>
 
-      {/* Global Search */}
-      <div style={{ position: 'relative', width: '360px' }}>
-        <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-        <input
-          type="text"
-          placeholder="Global search (Contacts, Enquiries, Phone, Campaign)..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          style={{
-            width: '100%',
-            padding: '8px 12px 8px 38px',
-            background: 'rgba(0,0,0,0.3)',
-            border: '1px solid var(--border-color)',
-            borderRadius: '8px',
-            color: 'white',
-            fontSize: '0.85rem',
-            outline: 'none'
-          }}
-        />
-      </div>
+        {/* Mobile Layout */}
+        <div className="flex md:hidden items-center justify-between w-full">
+          {/* Left: Logo & Hamburger Menu */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-blue-500/30">
+                ⚡
+              </div>
+              <h1 className="text-sm font-bold text-white">PioneerTech</h1>
+            </div>
+          </div>
 
-      {/* Action Buttons */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-        {/* Direct Meta Connect Button */}
-        <button className="meta-button pulse-glow" onClick={onOpenMetaModal}>
-          <Share2 size={16} />
-          <span>⚡ Connect Meta Account</span>
-        </button>
-
-        {/* Create Enquiry Button */}
-        <button className="glass-button" onClick={onOpenCreateModal}>
-          <Plus size={16} />
-          <span>New Enquiry</span>
-        </button>
-
-        <div style={{ width: '1px', height: '24px', background: 'var(--border-color)', margin: '0 4px' }}></div>
-
-        {/* Notification Bell */}
-        <button
-          className="notification-bell"
-          onClick={onOpenTodaysActions}
-          title="Today's Actions"
-        >
-          <Bell size={18} />
-          {todaysActionCount > 0 && (
-            <span className="badge-count">{todaysActionCount > 9 ? '9+' : todaysActionCount}</span>
-          )}
-        </button>
-
-        {/* User Profile Dropdown */}
-        <div style={{ position: 'relative' }} ref={dropdownRef}>
-          <button
-            className="user-profile-trigger"
-            onClick={() => { setShowDropdown(!showDropdown); setShowProfile(false); }}
-          >
-            <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#374151', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+          {/* Right: User Avatar with Quick Actions */}
+          <div className="relative flex" ref={dropdownRef}>
+            <button
+              className="w-8 h-8 rounded-full bg-[#374151] flex items-center justify-center overflow-hidden ring-2 ring-[rgba(255,255,255,0.05)]"
+              onClick={() => {
+                setShowMobileActions(!showMobileActions);
+                setShowDropdown(false);
+                setShowProfile(false);
+              }}
+            >
               {currentUser?.avatar_url ? (
-                <img src={currentUser.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%' }} />
+                <img
+                  src={currentUser.avatar_url}
+                  alt="Avatar"
+                  className="w-full h-full object-cover"
+                />
               ) : (
-                <User size={16} style={{ color: '#9ca3af' }} />
+                <User size={16} className="text-[#9ca3af]" />
               )}
-            </div>
-            <div style={{ textAlign: 'left' }}>
-              <p style={{ fontSize: '0.8rem', fontWeight: 600, color: 'white' }}>{currentUser?.first_name || 'User'}</p>
-              <span className={`user-role-badge ${roleClass}`}>{userRole}</span>
-            </div>
-            <ChevronDown size={14} style={{ color: 'var(--text-dim)', transition: 'transform 0.2s', transform: showDropdown ? 'rotate(180deg)' : 'rotate(0)' }} />
-          </button>
+            </button>
 
-          {/* Dropdown Menu */}
-          {showDropdown && !showProfile && (
-            <div className="user-dropdown">
-              <div className="user-dropdown-header">
-                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#374151', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                  {currentUser?.avatar_url ? (
-                    <img src={currentUser.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%' }} />
-                  ) : (
-                    <User size={18} style={{ color: '#9ca3af' }} />
-                  )}
-                </div>
-                <div>
-                  <p style={{ fontSize: '0.85rem', fontWeight: 600, color: 'white' }}>{currentUser?.first_name} {currentUser?.last_name || ''}</p>
-                  <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{currentUser?.email}</p>
+            {/* Hamburger Menu Button */}
+            <button
+              onClick={onToggleMobileMenu}
+              className="p-1.5 rounded-lg hover:bg-[rgba(255,255,255,0.05)] transition-colors"
+            >
+              {isMobileMenuOpen ? (
+                <X size={20} className="text-[#e2e8f0]" />
+              ) : (
+                <Menu size={20} className="text-[#e2e8f0]" />
+              )}
+            </button>
+
+            {/* Mobile Quick Actions Dropdown */}
+            {showMobileActions && (
+              <div className="absolute right-8 mt-8 w-45 bg-[rgba(11,15,25,0.98)] border border-[rgba(255,255,255,0.06)] rounded-xl shadow-2xl shadow-black/50 backdrop-blur-xl overflow-hidden z-50">
+                <div className="p-1">
+                  <button
+                    onClick={() => {
+                      onOpenMetaModal();
+                      setShowMobileActions(false);
+                    }}
+                    className="flex items-center gap-3 w-full px-1 py-2.5 rounded-lg text-[#94a3b8] hover:bg-[rgba(255,255,255,0.05)] hover:text-white transition-colors"
+                  >
+                    <Share2 size={18} className="text-blue-400" />
+                    <span className="text-[12px]">Connect Account</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      onOpenCreateModal();
+                      setShowMobileActions(false);
+                    }}
+                    className="flex items-center gap-3 w-full px-1 py-2.5 rounded-lg text-[#94a3b8] hover:bg-[rgba(255,255,255,0.05)] hover:text-white transition-colors"
+                  >
+                    <Plus size={18} className="text-emerald-400" />
+                    <span className="text-[12px]">New Enquiry</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      onOpenTodaysActions();
+                      setShowMobileActions(false);
+                    }}
+                    className="flex items-center gap-3 w-full px-1 py-2.5 rounded-lg text-[#94a3b8] hover:bg-[rgba(255,255,255,0.05)] hover:text-white transition-colors"
+                  >
+                    <Bell size={18} className="text-yellow-400" />
+                    <span className="text-[12px]">Today's Actions</span>
+                    {todaysActionCount > 0 && (
+                      <span className="ml-auto inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 text-xs font-bold text-white bg-red-500 rounded-full">
+                        {todaysActionCount > 9 ? "9+" : todaysActionCount}
+                      </span>
+                    )}
+                  </button>
+                  <div className="h-px bg-[rgba(255,255,255,0.06)] my-1" />
+                  <button
+                    onClick={() => {
+                      setShowMobileActions(false);
+                      setShowProfile(true);
+                    }}
+                    className="flex items-center gap-3 w-full px-1 py-2.5 rounded-lg text-[#94a3b8] hover:bg-[rgba(255,255,255,0.05)] hover:text-white transition-colors"
+                  >
+                    <UserCircle size={18} className="text-blue-400" />
+                    <span className="text-[12px]">View Profile</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowMobileActions(false);
+                      onLogout();
+                    }}
+                    className="flex items-center gap-3 w-full px-1 py-2.5 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors"
+                  >
+                    <LogOut size={18} />
+                    <span className="text-[12px]">Sign Out</span>
+                  </button>
                 </div>
               </div>
+            )}
 
-              <button className="user-dropdown-item" onClick={() => setShowProfile(true)}>
-                <UserCircle size={16} style={{ color: '#60a5fa' }} />
-                View Details
-              </button>
-
-              <div className="user-dropdown-divider" />
-
-              <button className="user-dropdown-item danger" onClick={() => { setShowDropdown(false); onLogout(); }}>
-                <LogOut size={16} />
-                Sign Out
-              </button>
-            </div>
-          )}
-
-          {/* Profile Details Card */}
-          {showDropdown && showProfile && (
-            <div className="user-dropdown" style={{ width: '280px' }}>
-              <div style={{ padding: '16px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '14px' }}>
+            {/* Mobile Profile Details */}
+            {showProfile && (
+              <div className="absolute right-0 mt-2 w-72 bg-[rgba(11,15,25,0.98)] border border-[rgba(255,255,255,0.06)] rounded-xl shadow-2xl shadow-black/50 backdrop-blur-xl overflow-hidden z-50">
+                <div className="p-4">
                   <button
-                    onClick={() => setShowProfile(false)}
-                    style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '0.78rem', padding: '2px 6px', borderRadius: '4px' }}
+                    onClick={() => {
+                      setShowProfile(false);
+                      setShowMobileActions(true);
+                    }}
+                    className="flex items-center gap-2 text-sm text-[#94a3b8] hover:text-white transition-colors mb-4"
                   >
                     ← Back
                   </button>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'white' }}>Profile Details</span>
-                </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', marginBottom: '16px' }}>
-                  <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'linear-gradient(135deg, #3b82f6, #6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', boxShadow: '0 0 20px rgba(59,130,246,0.4)' }}>
-                    {currentUser?.avatar_url ? (
-                      <img src={currentUser.avatar_url} alt="Avatar" style={{ width: '100%', height: '100%' }} />
-                    ) : (
-                      <User size={24} style={{ color: 'white' }} />
-                    )}
+                  <div className="flex flex-col items-center gap-3 mb-4">
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center overflow-hidden shadow-lg shadow-blue-500/30">
+                      {currentUser?.avatar_url ? (
+                        <img
+                          src={currentUser.avatar_url}
+                          alt="Avatar"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <User size={24} className="text-white" />
+                      )}
+                    </div>
+                    <div className="text-center">
+                      <p className="text-base font-bold text-white">
+                        {currentUser?.first_name} {currentUser?.last_name || ""}
+                      </p>
+                      <span
+                        className={`inline-block text-xs font-medium px-2 py-0.5 rounded ${
+                          isAdmin
+                            ? "bg-yellow-500/20 text-yellow-400"
+                            : "bg-emerald-500/20 text-emerald-400"
+                        }`}
+                      >
+                        {userRole}
+                      </span>
+                    </div>
                   </div>
-                  <div style={{ textAlign: 'center' }}>
-                    <p style={{ fontSize: '1rem', fontWeight: 700, color: 'white' }}>{currentUser?.first_name} {currentUser?.last_name || ''}</p>
-                    <span className={`user-role-badge ${roleClass}`}>{userRole}</span>
-                  </div>
-                </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.82rem' }}>
-                  <div style={{ background: 'rgba(0,0,0,0.3)', padding: '8px 12px', borderRadius: '6px' }}>
-                    <p style={{ color: 'var(--text-dim)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Username</p>
-                    <p style={{ color: 'white', fontWeight: 500 }}>{currentUser?.username || '—'}</p>
-                  </div>
-                  <div style={{ background: 'rgba(0,0,0,0.3)', padding: '8px 12px', borderRadius: '6px' }}>
-                    <p style={{ color: 'var(--text-dim)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Email</p>
-                    <p style={{ color: '#60a5fa', fontWeight: 500 }}>{currentUser?.email || '—'}</p>
-                  </div>
-                  <div style={{ background: 'rgba(0,0,0,0.3)', padding: '8px 12px', borderRadius: '6px' }}>
-                    <p style={{ color: 'var(--text-dim)', fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Role</p>
-                    <p style={{ color: 'white', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <Shield size={13} style={{ color: userRole === 'Admin' ? '#fbbf24' : '#34d399' }} />
-                      {userRole}
-                    </p>
+                  <div className="space-y-2">
+                    <div className="p-3 rounded-lg bg-[rgba(0,0,0,0.3)]">
+                      <p className="text-[10px] font-bold text-[#64748b] uppercase tracking-wider">
+                        Username
+                      </p>
+                      <p className="text-sm font-medium text-white mt-0.5">
+                        {currentUser?.username || "—"}
+                      </p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-[rgba(0,0,0,0.3)]">
+                      <p className="text-[10px] font-bold text-[#64748b] uppercase tracking-wider">
+                        Email
+                      </p>
+                      <p className="text-sm font-medium text-blue-400 mt-0.5">
+                        {currentUser?.email || "—"}
+                      </p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-[rgba(0,0,0,0.3)]">
+                      <p className="text-[10px] font-bold text-[#64748b] uppercase tracking-wider">
+                        Role
+                      </p>
+                      <p className="text-sm font-medium text-white mt-0.5 flex items-center gap-2">
+                        <Shield
+                          size={14}
+                          className={
+                            isAdmin
+                              ? "text-yellow-400"
+                              : "text-emerald-400"
+                          }
+                        />
+                        {userRole}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
+        </div>
+
+        {/* Desktop Actions */}
+        <div className="hidden md:flex items-center gap-1.5 md:gap-2">
+          <button
+            onClick={onOpenMetaModal}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg text-white text-sm font-medium hover:from-blue-600 hover:to-indigo-600 transition-all duration-200 shadow-lg shadow-blue-500/25"
+          >
+            <Share2 size={16} />
+            <span>⚡ Connect Meta</span>
+          </button>
+
+          <button
+            onClick={onOpenCreateModal}
+            className="flex items-center gap-2 px-4 py-2 border border-[rgba(255,255,255,0.1)] rounded-lg text-white text-sm font-medium hover:bg-[rgba(255,255,255,0.05)] transition-all duration-200"
+          >
+            <Plus size={16} />
+            <span>New Enquiry</span>
+          </button>
+
+          <div className="w-px h-6 bg-[rgba(255,255,255,0.06)] mx-1" />
+
+          <button
+            onClick={onOpenTodaysActions}
+            className="relative p-2 rounded-lg hover:bg-[rgba(255,255,255,0.05)] transition-all duration-200"
+            title="Today's Actions"
+          >
+            <Bell size={18} className="text-[#94a3b8]" />
+            {todaysActionCount > 0 && (
+              <span className="absolute -top-0.5 -right-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-red-500 rounded-full shadow-lg shadow-red-500/25">
+                {todaysActionCount > 9 ? "9+" : todaysActionCount}
+              </span>
+            )}
+          </button>
+
+          <div className="relative" ref={dropdownRef}>
+            <button
+              className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-[rgba(255,255,255,0.05)] transition-all duration-200"
+              onClick={() => {
+                setShowDropdown(!showDropdown);
+                setShowProfile(false);
+              }}
+            >
+              <div className="w-8 h-8 rounded-full bg-[#374151] flex items-center justify-center overflow-hidden ring-2 ring-[rgba(255,255,255,0.05)]">
+                {currentUser?.avatar_url ? (
+                  <img
+                    src={currentUser.avatar_url}
+                    alt="Avatar"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User size={16} className="text-[#9ca3af]" />
+                )}
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-medium text-white">
+                  {currentUser?.first_name || "User"}
+                </p>
+                <span
+                  className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                    isAdmin
+                      ? "bg-yellow-500/20 text-yellow-400"
+                      : "bg-emerald-500/20 text-emerald-400"
+                  }`}
+                >
+                  {userRole}
+                </span>
+              </div>
+              <ChevronDown
+                size={14}
+                className={`text-[#64748b] transition-transform duration-200 ${showDropdown ? "rotate-180" : ""}`}
+              />
+            </button>
+
+            {showDropdown && !showProfile && (
+              <div className="absolute right-0 mt-2 w-64 bg-[rgba(11,15,25,0.98)] border border-[rgba(255,255,255,0.06)] rounded-xl shadow-2xl shadow-black/50 backdrop-blur-xl overflow-hidden z-50">
+                <div className="p-4 border-b border-[rgba(255,255,255,0.06)]">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-full bg-[#374151] flex items-center justify-center overflow-hidden">
+                      {currentUser?.avatar_url ? (
+                        <img
+                          src={currentUser.avatar_url}
+                          alt="Avatar"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <User size={18} className="text-[#9ca3af]" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-white">
+                        {currentUser?.first_name} {currentUser?.last_name || ""}
+                      </p>
+                      <p className="text-xs text-[#64748b]">
+                        {currentUser?.email}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-1">
+                  <button
+                    className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-[#94a3b8] hover:bg-[rgba(255,255,255,0.05)] hover:text-white transition-colors"
+                    onClick={() => setShowProfile(true)}
+                  >
+                    <UserCircle size={16} className="text-blue-400" />
+                    View Details
+                  </button>
+
+                  <button
+                    className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                    onClick={() => {
+                      setShowDropdown(false);
+                      onLogout();
+                    }}
+                  >
+                    <LogOut size={16} />
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {showDropdown && showProfile && (
+              <div className="absolute right-0 mt-2 w-72 bg-[rgba(11,15,25,0.98)] border border-[rgba(255,255,255,0.06)] rounded-xl shadow-2xl shadow-black/50 backdrop-blur-xl overflow-hidden z-50">
+                <div className="p-4">
+                  <button
+                    onClick={() => setShowProfile(false)}
+                    className="flex items-center gap-2 text-sm text-[#94a3b8] hover:text-white transition-colors mb-4"
+                  >
+                    ← Back
+                  </button>
+
+                  <div className="flex flex-col items-center gap-3 mb-4">
+                    <div className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-indigo-500 flex items-center justify-center overflow-hidden shadow-lg shadow-blue-500/30">
+                      {currentUser?.avatar_url ? (
+                        <img
+                          src={currentUser.avatar_url}
+                          alt="Avatar"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <User size={24} className="text-white" />
+                      )}
+                    </div>
+                    <div className="text-center">
+                      <p className="text-base font-bold text-white">
+                        {currentUser?.first_name} {currentUser?.last_name || ""}
+                      </p>
+                      <span
+                        className={`inline-block text-xs font-medium px-2 py-0.5 rounded ${
+                          isAdmin
+                            ? "bg-yellow-500/20 text-yellow-400"
+                            : "bg-emerald-500/20 text-emerald-400"
+                        }`}
+                      >
+                        {userRole}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <div className="p-3 rounded-lg bg-[rgba(0,0,0,0.3)]">
+                      <p className="text-[10px] font-bold text-[#64748b] uppercase tracking-wider">
+                        Username
+                      </p>
+                      <p className="text-sm font-medium text-white mt-0.5">
+                        {currentUser?.username || "—"}
+                      </p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-[rgba(0,0,0,0.3)]">
+                      <p className="text-[10px] font-bold text-[#64748b] uppercase tracking-wider">
+                        Email
+                      </p>
+                      <p className="text-sm font-medium text-blue-400 mt-0.5">
+                        {currentUser?.email || "—"}
+                      </p>
+                    </div>
+                    <div className="p-3 rounded-lg bg-[rgba(0,0,0,0.3)]">
+                      <p className="text-[10px] font-bold text-[#64748b] uppercase tracking-wider">
+                        Role
+                      </p>
+                      <p className="text-sm font-medium text-white mt-0.5 flex items-center gap-2">
+                        <Shield
+                          size={14}
+                          className={
+                            isAdmin
+                              ? "text-yellow-400"
+                              : "text-emerald-400"
+                          }
+                        />
+                        {userRole}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Mobile Search Bar - Full width */}
+      <div className="md:hidden mt-3">
+        <div className="relative">
+          <Search
+            size={16}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-[#64748b]"
+          />
+          <input
+            type="text"
+            placeholder="Search contacts, enquiries..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full py-2.5 pl-10 pr-4 bg-[rgba(0,0,0,0.3)] border border-[rgba(255,255,255,0.06)] rounded-lg text-white text-sm placeholder-[#64748b] focus:outline-none focus:border-blue-500/50 transition-colors"
+          />
         </div>
       </div>
     </header>

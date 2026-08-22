@@ -3,6 +3,9 @@
 *.log
 run.txt
 *.pdf
+.env
+.env.*
+!.env.example
 
 # Python
 __pycache__/

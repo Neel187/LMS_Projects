@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 from apps.contacts.models import Contact
 
 class EnquiryStatus(models.TextChoices):
@@ -21,8 +21,8 @@ class Enquiry(models.Model):
     status = models.CharField(max_length=50, choices=EnquiryStatus.choices, default=EnquiryStatus.NEW, db_index=True)
     source = models.CharField(max_length=50, choices=LeadSource.choices, default=LeadSource.MANUAL, db_index=True)
     
-    primary_owner = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='primary_enquiries')
-    secondary_owners = models.ManyToManyField(User, blank=True, related_name='secondary_enquiries')
+    primary_owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name='primary_enquiries')
+    secondary_owners = models.ManyToManyField(settings.AUTH_USER_MODEL, blank=True, related_name='secondary_enquiries')
     
     # Meta Ads Details
     campaign_name = models.CharField(max_length=255, blank=True, default='', db_index=True)
@@ -62,7 +62,7 @@ class ActivityTimeline(models.Model):
     activity_type = models.CharField(max_length=50, choices=ActivityType.choices)
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True, default='')
-    performed_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    performed_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True, db_index=True)
 
     class Meta:
@@ -73,7 +73,7 @@ class ActivityTimeline(models.Model):
 
 class SavedView(models.Model):
     name = models.CharField(max_length=150)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='saved_views')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='saved_views')
     filters_config = models.JSONField(default=dict)
     is_pinned = models.BooleanField(default=False)
     is_shared = models.BooleanField(default=False)

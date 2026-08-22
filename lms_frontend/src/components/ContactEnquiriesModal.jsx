@@ -1,22 +1,103 @@
-import React, { useState, useEffect } from 'react';
-import { X, User, Phone, Mail, FileText, Share2, Calendar, MessageSquare, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import {
+  X,
+  User,
+  Phone,
+  Mail,
+  FileText,
+  Share2,
+  Calendar,
+  MessageSquare,
+  AlertCircle,
+} from "lucide-react";
+import { apiFetch } from "../api";
 
-export default function ContactEnquiriesModal({ contact, onClose, onSelectEnquiry }) {
+// --- Helper for Status Badge ---
+const StatusBadge = ({ status }) => {
+  const baseClass =
+    "px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide border";
+  switch (status?.toLowerCase()) {
+    case "new":
+      return (
+        <span
+          className={`${baseClass} bg-blue-500/20 text-blue-300 border-blue-500/30`}
+        >
+          New
+        </span>
+      );
+    case "contacted":
+      return (
+        <span
+          className={`${baseClass} bg-yellow-500/20 text-yellow-300 border-yellow-500/30`}
+        >
+          Contacted
+        </span>
+      );
+    case "qualified":
+      return (
+        <span
+          className={`${baseClass} bg-emerald-500/20 text-emerald-300 border-emerald-500/30`}
+        >
+          Qualified
+        </span>
+      );
+    case "closed":
+      return (
+        <span
+          className={`${baseClass} bg-purple-500/20 text-purple-300 border-purple-500/30`}
+        >
+          Closed
+        </span>
+      );
+    case "lost":
+      return (
+        <span
+          className={`${baseClass} bg-red-500/20 text-red-300 border-red-500/30`}
+        >
+          Lost
+        </span>
+      );
+    default:
+      return (
+        <span
+          className={`${baseClass} bg-slate-500/20 text-slate-300 border-slate-500/30`}
+        >
+          Unknown
+        </span>
+      );
+  }
+};
+
+export default function ContactEnquiriesModal({
+  contact,
+  onClose,
+  onSelectEnquiry,
+}) {
   const [associatedEnquiries, setAssociatedEnquiries] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (contact) {
       setLoading(true);
-      fetch(`/api/enquiries/?search=${encodeURIComponent(contact.phone || contact.email || contact.first_name)}`)
-        .then(res => res.json())
-        .then(data => {
+      // Use phone, email, or name to search for associated enquiries
+      const searchQuery = encodeURIComponent(
+        contact.phone || contact.email || contact.first_name,
+      );
+      apiFetch(`/api/enquiries/?search=${searchQuery}`)
+        .then((res) => res.json())
+        .then((data) => {
           const results = data.results || data;
-          setAssociatedEnquiries(results.filter(e => e.contact === contact.id || e.contact_details?.phone === contact.phone));
+          // Filter to ensure only exact matches by ID or phone
+          const filtered = results.filter(
+            (e) =>
+              e.contact === contact.id ||
+              e.contact_details?.phone === contact.phone,
+          );
+          setAssociatedEnquiries(filtered);
           setLoading(false);
         })
-        .catch(err => {
-          console.error(err);
+        .catch((err) => {
+          console.error("Error fetching contact enquiries:", err);
           setLoading(false);
         });
     }
@@ -25,97 +106,129 @@ export default function ContactEnquiriesModal({ contact, onClose, onSelectEnquir
   if (!contact) return null;
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(10px)', zIndex: 110, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
-      <div className="glass-panel animate-fade-in" style={{ width: '100%', maxWidth: '680px', maxHeight: '85vh', background: '#0b0f19', borderRadius: '16px', display: 'flex', flexDirection: 'column', overflow: 'hidden', border: '1px solid rgba(52, 211, 153, 0.4)' }}>
-        
-        {/* Header */}
-        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-color)', background: 'rgba(18, 24, 38, 0.95)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <h3 style={{ fontSize: '1.2rem', fontWeight: 700, color: 'white' }}>
+    <div className="fixed inset-0 z-[110] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6">
+      <div className="glass-panel w-full max-w-2xl max-h-[90vh] bg-[#0b0f19] rounded-2xl border border-emerald-500/30 flex flex-col overflow-hidden shadow-2xl animate-fade-in">
+        {/* --- Header --- */}
+        <div className="flex-shrink-0 px-5 py-4 sm:px-6 border-b border-white/10 bg-[rgba(18,24,38,0.95)] flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-1">
+              <h3 className="text-lg sm:text-xl font-bold text-white truncate">
                 Master Contact: {contact.first_name} {contact.last_name}
               </h3>
-              <span style={{ fontSize: '0.72rem', background: 'rgba(52, 211, 153, 0.15)', color: '#34d399', padding: '2px 10px', borderRadius: '12px', fontWeight: 600 }}>
-                Unique Contact Record
+              <span className="text-[10px] sm:text-xs px-2.5 py-0.5 bg-emerald-500/15 text-emerald-400 rounded-full font-semibold border border-emerald-500/20 whitespace-nowrap">
+                Unique Record
               </span>
             </div>
-            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <span>📞 {contact.phone}</span>
-              {contact.email && <span>✉️ {contact.email}</span>}
-              <span>Lead Source: {contact.primary_lead_source}</span>
-            </p>
+
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs sm:text-sm text-slate-400">
+              <span className="flex items-center gap-1.5">
+                <Phone size={14} className="flex-shrink-0" />
+                {contact.phone || "—"}
+              </span>
+              {contact.email && (
+                <span className="flex items-center gap-1.5">
+                  <Mail size={14} className="flex-shrink-0" />
+                  {contact.email}
+                </span>
+              )}
+              <span className="flex items-center gap-1.5">
+                <Share2 size={14} className="flex-shrink-0" />
+                Source: {contact.primary_lead_source || "Unknown"}
+              </span>
+            </div>
           </div>
-          <button onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+
+          <button
+            onClick={onClose}
+            className="p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-lg transition-colors flex-shrink-0"
+          >
             <X size={22} />
           </button>
         </div>
 
-        {/* Modal Body */}
-        <div style={{ padding: '24px', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h4 style={{ fontSize: '0.95rem', color: '#93c5fd', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <FileText size={18} /> All Associated Enquiries ({associatedEnquiries.length})
+        {/* --- Body --- */}
+        <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
+          {/* Sub-header info */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+            <h4 className="text-sm font-semibold text-blue-300 flex items-center gap-2">
+              <FileText size={18} />
+              All Associated Enquiries ({associatedEnquiries.length})
             </h4>
-            <span style={{ fontSize: '0.75rem', color: 'var(--text-dim)' }}>
-              Automatically aggregated by Phone/Email identifier
+            <span className="text-[10px] sm:text-xs text-slate-500">
+              Auto-aggregated by Phone/Email
             </span>
           </div>
 
+          {/* State Handlers */}
           {loading ? (
-            <p style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '30px' }}>Loading associated enquiries...</p>
+            <div className="flex items-center justify-center py-12 text-slate-400">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-6 h-6 border-2 border-slate-600 border-t-blue-400 rounded-full animate-spin" />
+                <span className="text-sm">Loading enquiries...</span>
+              </div>
+            </div>
           ) : associatedEnquiries.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '30px', background: 'rgba(0,0,0,0.3)', borderRadius: '10px' }}>
-              <AlertCircle size={24} style={{ color: 'var(--text-dim)', marginBottom: '8px' }} />
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No enquiries currently associated with this contact.</p>
+            <div className="flex flex-col items-center justify-center py-10 bg-black/30 rounded-xl border border-white/5">
+              <AlertCircle size={28} className="text-slate-500 mb-2" />
+              <p className="text-sm text-slate-400">
+                No enquiries currently associated with this contact.
+              </p>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {associatedEnquiries.map(enquiry => (
+            <div className="flex flex-col gap-3">
+              {associatedEnquiries.map((enquiry) => (
                 <div
                   key={enquiry.id}
                   onClick={() => {
                     onClose();
                     if (onSelectEnquiry) onSelectEnquiry(enquiry);
                   }}
-                  className="glass-panel"
-                  style={{ padding: '16px', borderRadius: '10px', cursor: 'pointer', transition: 'all 0.15s ease' }}
-                  onMouseEnter={(e) => e.currentTarget.style.borderColor = '#3b82f6'}
-                  onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border-color)'}
+                  className="group relative bg-black/30 hover:bg-black/50 border border-white/5 hover:border-blue-500/50 rounded-xl p-4 cursor-pointer transition-all duration-200"
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <h5 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'white' }}>{enquiry.title}</h5>
-                      <span className={`status-badge status-${(enquiry.status || 'new').toLowerCase()}`}>
-                        {enquiry.status}
-                      </span>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                      <h5 className="text-base font-semibold text-white group-hover:text-blue-400 transition-colors truncate max-w-[200px] sm:max-w-[300px]">
+                        {enquiry.title || "Untitled Enquiry"}
+                      </h5>
+                      <StatusBadge status={enquiry.status} />
                     </div>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    <span className="text-xs text-slate-500 flex items-center gap-1.5 whitespace-nowrap">
+                      <Calendar size={12} />
                       {new Date(enquiry.created_at).toLocaleDateString()}
                     </span>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <span style={{ background: 'rgba(255,255,255,0.06)', padding: '2px 8px', borderRadius: '4px', color: '#cbd5e1' }}>
-                        Source: {enquiry.source}
+                  <div className="flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm text-slate-400">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <span className="bg-white/5 px-2 py-1 rounded-md border border-white/5 text-slate-300">
+                        Source: {enquiry.source || "—"}
                       </span>
-                      {enquiry.campaign_name && <span>Campaign: {enquiry.campaign_name}</span>}
+                      {enquiry.campaign_name && (
+                        <span className="hidden xs:inline">
+                          Campaign: {enquiry.campaign_name}
+                        </span>
+                      )}
                     </div>
-
-                    <span style={{ color: '#60a5fa', fontWeight: 600 }}>Click to Open Details →</span>
+                    <span className="text-blue-400 font-medium group-hover:text-blue-300 transition-colors text-xs sm:text-sm">
+                      Click to open details →
+                    </span>
                   </div>
 
+                  {/* Notes Section */}
                   {enquiry.notes_summary && (
-                    <p style={{ fontSize: '0.78rem', color: 'var(--text-dim)', marginTop: '8px', background: 'rgba(0,0,0,0.2)', padding: '6px 10px', borderRadius: '6px' }}>
-                      Notes: {enquiry.notes_summary}
-                    </p>
+                    <div className="mt-3 text-xs text-slate-500 bg-black/40 p-2.5 rounded-lg border border-white/5">
+                      <span className="font-medium text-slate-400 mr-1">
+                        Notes:
+                      </span>
+                      {enquiry.notes_summary.length > 120
+                        ? `${enquiry.notes_summary.substring(0, 120)}...`
+                        : enquiry.notes_summary}
+                    </div>
                   )}
                 </div>
               ))}
             </div>
           )}
-
         </div>
       </div>
     </div>

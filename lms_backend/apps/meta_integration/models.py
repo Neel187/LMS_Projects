@@ -1,8 +1,8 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.conf import settings
 
 class MetaAccount(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='meta_accounts')
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='meta_accounts')
     facebook_user_id = models.CharField(max_length=100)
     access_token = models.TextField()
     token_expires_at = models.DateTimeField(null=True, blank=True)
@@ -12,7 +12,7 @@ class MetaAccount(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"MetaAccount ({self.facebook_user_id}) - {self.user.username}"
+        return f"MetaAccount ({self.facebook_user_id}) - {self.user.email}"
 
 class MetaLeadSyncLog(models.Model):
     page_id = models.CharField(max_length=100, blank=True, default='')
