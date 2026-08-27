@@ -9,53 +9,84 @@ import {
   RefreshCw,
 } from "lucide-react";
 
-// --- Mock Page Data ---
-const PAGES_DATA = [
-  { name: "Pioneer Real Estate Official", id: "page_991823", forms: 3 },
-  { name: "Dubai Luxury Living Page", id: "page_882910", forms: 2 },
-  { name: "GCC Property Expo Portfolio", id: "page_773019", forms: 1 },
-];
-
 export default function MetaConnectModal({ isOpen, onClose, onConnected }) {
   const [step, setStep] = useState("initial");
-  const [selectedPages, setSelectedPages] = useState([
-    "Pioneer Real Estate Official",
-    "Dubai Luxury Living Page",
-  ]);
   const [isLoading, setIsLoading] = useState(false);
+  const popupRef = React.useRef(null);
+  const popupPollRef = React.useRef(null);
+
+  React.useEffect(() => {
+    const handleOAuthMessage = (event) => {
+      if (event.origin !== window.location.origin || event.data?.source !== "lms-meta-oauth") return;
+      setIsLoading(false);
+      if (event.data.status === "connected") {
+        popupRef.current?.close();
+        popupRef.current = null;
+        setStep("connected");
+        onConnected?.(event.data);
+      } else {
+        setStep("initial");
+        window.alert(event.data.error || "Meta authorization failed.");
+      }
+    };
+    window.addEventListener("message", handleOAuthMessage);
+    return () => window.removeEventListener("message", handleOAuthMessage);
+  }, [onConnected]);
+
+  React.useEffect(() => () => window.clearInterval(popupPollRef.current), []);
 
   if (!isOpen) return null;
 
-  const handleLaunchMetaOAuth = () => {
+  const handleLaunchMetaOAuth = async () => {
+    const popup = window.open("about:blank", "meta-oauth", "width=620,height=760,resizable=yes,scrollbars=yes");
+    if (!popup) {
+      window.alert("Please allow popups for this site to connect Meta.");
+      return;
+    }
+    popupRef.current = popup;
     setIsLoading(true);
     setStep("connecting");
-
-    // Simulate opening official Meta OAuth popup
-    setTimeout(() => {
-      setIsLoading(false);
-      setStep("select_pages");
-    }, 1200);
-  };
-
-  const handleCompleteConnection = async () => {
-    setIsLoading(true);
     try {
-      // Call Django Meta Callback Endpoint
-      const response = await apiFetch("/api/meta/callback/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          code: "sample_fb_oauth_authorization_code_901928",
-        }),
-      });
-      const data = await response.json();
-      setIsLoading(false);
-      setStep("connected");
-      if (onConnected) onConnected(data);
+      const response = await apiFetch("/api/meta/oauth-url/");
+      const contentType = response.headers.get("content-type") || "";
+      const data = contentType.includes("application/json") ? await response.json() : {};
+      if (!response.ok || !data.meta_oauth_url) throw new Error(data.error || "Unable to start Meta authorization.");
+      popup.location.href = data.meta_oauth_url;
+      popupPollRef.current = window.setInterval(() => {
+        try {
+          if (popup.closed) {
+            window.clearInterval(popupPollRef.current);
+            popupPollRef.current = null;
+            setIsLoading(false);
+            setStep("initial");
+            return;
+          }
+
+          if (popup.location.origin !== window.location.origin) return;
+          const metaStatus = new URL(popup.location.href).searchParams.get("meta_status");
+          if (!metaStatus) return;
+
+          window.clearInterval(popupPollRef.current);
+          popupPollRef.current = null;
+          popup.close();
+          setIsLoading(false);
+          if (metaStatus === "connected") {
+            setStep("connected");
+            onConnected?.({ status: "connected" });
+          }
+        } catch {
+          // The popup is still on Meta's cross-origin page.
+        }
+      }, 500);
     } catch (err) {
       console.error(err);
+      popup.close();
+      popupRef.current = null;
+      window.clearInterval(popupPollRef.current);
+      popupPollRef.current = null;
       setIsLoading(false);
-      setStep("connected");
+      setStep("initial");
+      window.alert(err.message || "Unable to start Meta authorization.");
     }
   };
 
@@ -164,66 +195,6 @@ export default function MetaConnectModal({ isOpen, onClose, onConnected }) {
                   Connecting to Facebook Graph API OAuth Endpoint
                 </p>
               </div>
-            </div>
-          )}
-
-          {/* Step 3: Select Pages */}
-          {step === "select_pages" && (
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center gap-2.5 text-emerald-400 text-sm font-medium bg-emerald-500/10 px-3 py-2 rounded-lg border border-emerald-500/20">
-                <CheckCircle2 size={18} />
-                <span>
-                  Meta Account Authenticated: Pioneer Real Estate Admin
-                </span>
-              </div>
-
-              <p className="text-sm text-slate-400">
-                Select Facebook Pages & Business Portfolios to enable real-time
-                lead synchronization:
-              </p>
-
-              <div className="flex flex-col gap-3 mt-1">
-                {PAGES_DATA.map((page) => (
-                  <label
-                    key={page.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3.5 bg-white/5 hover:bg-white/10 rounded-xl border border-white/10 cursor-pointer transition-colors group"
-                  >
-                    <div className="flex items-start sm:items-center gap-3">
-                      <input
-                        type="checkbox"
-                        defaultChecked={selectedPages.includes(page.name)}
-                        className="mt-1 sm:mt-0 accent-[#1877f2] w-4 h-4 cursor-pointer flex-shrink-0"
-                      />
-                      <div>
-                        <p className="text-sm font-semibold text-slate-200 group-hover:text-white transition-colors">
-                          {page.name}
-                        </p>
-                        <p className="text-xs text-slate-500 mt-0.5">
-                          ID: {page.id} • {page.forms} Active Instant Forms
-                        </p>
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-0.5 rounded-full border border-emerald-500/20 whitespace-nowrap self-start sm:self-center ml-9 sm:ml-0">
-                      Webhook Ready
-                    </span>
-                  </label>
-                ))}
-              </div>
-
-              <button
-                onClick={handleCompleteConnection}
-                disabled={isLoading}
-                className="w-full flex items-center justify-center gap-2 py-3.5 mt-2 bg-[#1877f2] hover:bg-[#0a63d6] text-white font-semibold rounded-xl transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-600/25"
-              >
-                {isLoading ? (
-                  <>
-                    <RefreshCw size={16} className="animate-spin" />
-                    Registering Webhooks...
-                  </>
-                ) : (
-                  "Save & Enable Real-Time Lead Sync"
-                )}
-              </button>
             </div>
           )}
 
