@@ -25,11 +25,16 @@ export default function Navbar({
   onOpenProfile,
   onToggleMobileMenu,
   isMobileMenuOpen,
+  metaAccount,
+  onDisconnectMeta,
 }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showMobileActions, setShowMobileActions] = useState(false);
+  const [showMetaMenu, setShowMetaMenu] = useState(false);
+  const [isDisconnectingMeta, setIsDisconnectingMeta] = useState(false);
   const dropdownRef = useRef(null);
+  const metaMenuRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -37,6 +42,9 @@ export default function Navbar({
         setShowDropdown(false);
         setShowProfile(false);
         setShowMobileActions(false);
+      }
+      if (metaMenuRef.current && !metaMenuRef.current.contains(e.target)) {
+        setShowMetaMenu(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -138,7 +146,9 @@ export default function Navbar({
                     className="flex items-center gap-3 w-full px-1 py-2.5 rounded-lg text-[#94a3b8] hover:bg-[rgba(255,255,255,0.05)] hover:text-white transition-colors"
                   >
                     <Share2 size={18} className="text-blue-400" />
-                    <span className="text-[12px]">Connect Account</span>
+                    <span className="text-[12px]">
+                      {metaAccount?.connected ? metaAccount.name : "Connect Account"}
+                    </span>
                   </button>
                   <button
                     onClick={() => {
@@ -274,13 +284,38 @@ export default function Navbar({
 
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center gap-1.5 md:gap-2">
+          <div className="relative" ref={metaMenuRef}>
           <button
-            onClick={onOpenMetaModal}
+            onClick={() => {
+              if (metaAccount?.connected) {
+                setShowMetaMenu(!showMetaMenu);
+              } else {
+                onOpenMetaModal();
+              }
+            }}
             className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg text-white text-sm font-medium hover:from-blue-600 hover:to-indigo-600 transition-all duration-200 shadow-lg shadow-blue-500/25"
           >
             <Share2 size={16} />
-            <span>⚡ Connect Meta</span>
+            <span>{metaAccount?.connected ? metaAccount.name : "⚡ Connect Meta"}</span>
           </button>
+
+          {showMetaMenu && metaAccount?.connected && (
+            <div className="absolute top-12 right-0 z-50 w-56 rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(11,15,25,0.98)] p-1 shadow-2xl">
+              <button
+                disabled={isDisconnectingMeta}
+                onClick={() => {
+                  setShowMetaMenu(false);
+                  setIsDisconnectingMeta(true);
+                  Promise.resolve(onDisconnectMeta()).finally(() => setIsDisconnectingMeta(false));
+                }}
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 disabled:cursor-wait disabled:opacity-60"
+              >
+                <LogOut size={16} />
+                {isDisconnectingMeta ? "Disconnecting..." : "Logout Meta account"}
+              </button>
+            </div>
+          )}
+          </div>
 
           <button
             onClick={onOpenCreateModal}
