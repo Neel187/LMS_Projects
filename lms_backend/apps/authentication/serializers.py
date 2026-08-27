@@ -3,7 +3,7 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework import serializers
 
-from .models import Company, User
+from .models import Company, User, UserProfile
 
 
 class AccountSerializer(serializers.ModelSerializer):
@@ -22,6 +22,36 @@ class AccountSerializer(serializers.ModelSerializer):
             "updated_at",
             "last_login",
         ]
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    id = serializers.UUIDField(source="user.id", read_only=True)
+    company_id = serializers.UUIDField(source="user.company_id", read_only=True)
+    email = serializers.EmailField(source="user.email", read_only=True)
+    mobile = serializers.CharField(source="user.mobile", read_only=True)
+    profile_created_at = serializers.DateTimeField(source="user.created_at", read_only=True)
+    photo_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserProfile
+        fields = [
+            "id",
+            "username",
+            "photo",
+            "photo_url",
+            "birthdate",
+            "company_id",
+            "email",
+            "mobile",
+            "profile_created_at",
+        ]
+        extra_kwargs = {"photo": {"write_only": True, "required": False}}
+
+    def get_photo_url(self, obj):
+        if not obj.photo:
+            return None
+        request = self.context.get("request")
+        return request.build_absolute_uri(obj.photo.url) if request else obj.photo.url
 
 
 class RegisterSerializer(serializers.Serializer):

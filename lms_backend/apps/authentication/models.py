@@ -58,3 +58,15 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.get_full_name() or self.email
+
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+    username = models.CharField(max_length=150, unique=True, blank=True, null=True)
+    photo = models.FileField(upload_to="profile_photos/", blank=True, null=True)
+    birthdate = models.DateField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = "authentication_userprofile"

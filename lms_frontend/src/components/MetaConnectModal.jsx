@@ -17,7 +17,7 @@ const PAGES_DATA = [
 ];
 
 export default function MetaConnectModal({ isOpen, onClose, onConnected }) {
-  const [step, setStep] = useState("initial"); // 'initial', 'connecting', 'select_pages', 'connected'
+  const [step, setStep] = useState("initial");
   const [selectedPages, setSelectedPages] = useState([
     "Pioneer Real Estate Official",
     "Dubai Luxury Living Page",

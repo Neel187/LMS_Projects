@@ -9,6 +9,7 @@ import ContactsView from "./components/ContactsView";
 import LandingPage from "./components/LandingPage";
 import TodaysActions from "./components/TodaysActions";
 import Toast from "./components/Toast";
+import ProfileModal from "./components/ProfileModal";
 import { apiFetch } from "./api";
 
 export default function App() {
@@ -27,6 +28,7 @@ export default function App() {
   const [todaysActionCount, setTodaysActionCount] = useState(0);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [toast, setToast] = useState(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -212,8 +214,20 @@ export default function App() {
         setSearchTerm={setSearchTerm}
         todaysActionCount={todaysActionCount}
         onOpenTodaysActions={() => setActiveTab("todaysActions")}
+        onOpenProfile={() => setIsProfileModalOpen(true)}
         onToggleMobileMenu={toggleMobileMenu}
         isMobileMenuOpen={isMobileMenuOpen}
+      />
+
+      <ProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        onSaved={(profile) => {
+          const updatedUser = { ...currentUser, username: profile.username, avatar_url: profile.photo_url };
+          setCurrentUser(updatedUser);
+          localStorage.setItem("lms_user", JSON.stringify(updatedUser));
+        }}
+        onToast={showToast}
       />
 
       {/* Main Workspace Body */}
