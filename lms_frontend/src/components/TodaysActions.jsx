@@ -223,7 +223,6 @@ export default function TodaysActions({ currentUser, onSelectEnquiry }) {
               isActive={filter === "notes"}
               onClick={() => setFilter("notes")}
             />
-
             <button
               onClick={fetchTodaysActions}
               className="ml-1 p-2 text-slate-400 hover:text-white hover:bg-white/5 rounded-md transition-colors"

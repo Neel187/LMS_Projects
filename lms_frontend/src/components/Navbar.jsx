@@ -22,6 +22,7 @@ export default function Navbar({
   setSearchTerm,
   todaysActionCount,
   onOpenTodaysActions,
+  onOpenProfile,
   onToggleMobileMenu,
   isMobileMenuOpen,
 }) {
@@ -168,7 +169,7 @@ export default function Navbar({
                   <button
                     onClick={() => {
                       setShowMobileActions(false);
-                      setShowProfile(true);
+                      onOpenProfile();
                     }}
                     className="flex items-center gap-3 w-full px-1 py-2.5 rounded-lg text-[#94a3b8] hover:bg-[rgba(255,255,255,0.05)] hover:text-white transition-colors"
                   >
@@ -372,7 +373,10 @@ export default function Navbar({
                 <div className="p-1">
                   <button
                     className="flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm text-[#94a3b8] hover:bg-[rgba(255,255,255,0.05)] hover:text-white transition-colors"
-                    onClick={() => setShowProfile(true)}
+                    onClick={() => {
+                      setShowDropdown(false);
+                      onOpenProfile();
+                    }}
                   >
                     <UserCircle size={16} className="text-blue-400" />
                     View Details

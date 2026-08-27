@@ -9,11 +9,14 @@ from .models import User
 from django.db.models import Q
 from django.utils import timezone
 from rest_framework import status
+from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .serializers import AccountSerializer, LoginSerializer, RegisterSerializer
+from .models import UserProfile
+from .serializers import AccountSerializer, LoginSerializer, ProfileSerializer, RegisterSerializer
 
 
 def build_google_mobile(profile_sub: str) -> str:
@@ -70,6 +73,30 @@ class LoginView(APIView):
                 "user": AccountSerializer(user).data,
             }
         )
+
+
+class ProfileView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get_profile(self, user):
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        return profile
+
+    def get(self, request):
+        return Response(ProfileSerializer(self.get_profile(request.user), context={"request": request}).data)
+
+    def patch(self, request):
+        profile = self.get_profile(request.user)
+        serializer = ProfileSerializer(
+            profile,
+            data=request.data,
+            partial=True,
+            context={"request": request},
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
 
 
 class GoogleLoginView(APIView):

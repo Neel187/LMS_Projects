@@ -40,9 +40,7 @@ const getInitialColumns = () => {
       const validKeys = ALL_COLUMNS.map((c) => c.key);
       return parsed.filter((key) => validKeys.includes(key));
     }
-  } catch (e) {
-    /* ignore */
-  }
+  } catch (e) {}
   return ALL_COLUMNS.map((c) => c.key);
 };
 
