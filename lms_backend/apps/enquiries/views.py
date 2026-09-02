@@ -4,8 +4,11 @@ from rest_framework.response import Response
 from django.db.models import Q
 from django.utils import timezone
 from datetime import timedelta
+# pyrefly: ignore [missing-import]
 from apps.contacts.models import Contact
+# pyrefly: ignore [missing-import]
 from .models import Enquiry, ActivityTimeline, SavedView, EnquiryStatus, ActivityType
+# pyrefly: ignore [missing-import]
 from .serializers import ContactSerializer, EnquirySerializer, ActivityTimelineSerializer, SavedViewSerializer
 
 class ContactViewSet(viewsets.ReadOnlyModelViewSet):
@@ -30,6 +33,17 @@ class EnquiryViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         qs = Enquiry.objects.select_related('contact', 'primary_owner').prefetch_related('secondary_owners').all()
+
+        # Restrict to currently selected Meta pages when the user has an active Meta account.
+        if self.request.user and self.request.user.is_authenticated:
+            from apps.meta_integration.models import MetaAccount
+            active_meta = MetaAccount.objects.filter(user=self.request.user, is_active=True).first()
+            if active_meta:
+                selected_page_ids = active_meta.selected_page_ids or [
+                    str(page.get('id')) for page in (active_meta.connected_pages or []) if page.get('id')
+                ]
+                if selected_page_ids:
+                    qs = qs.filter(page_id__in=[str(page_id) for page_id in selected_page_ids])
         
         # Smart Views & Multi-condition Filters
         status_param = self.request.query_params.get('status')
@@ -37,7 +51,7 @@ class EnquiryViewSet(viewsets.ModelViewSet):
         campaign_param = self.request.query_params.get('campaign')
         form_param = self.request.query_params.get('instant_form')
         search_query = self.request.query_params.get('search')
-        followup_due = self.request.query_params.get('followup_due') # today, overdue, upcoming
+        followup_due = self.request.query_params.get('followup_due')
 
         if status_param:
             qs = qs.filter(status=status_param)

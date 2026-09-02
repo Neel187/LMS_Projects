@@ -12,18 +12,66 @@ import {
 export default function MetaConnectModal({ isOpen, onClose, onConnected }) {
   const [step, setStep] = useState("initial");
   const [isLoading, setIsLoading] = useState(false);
+  const [autoCloseCountdown, setAutoCloseCountdown] = useState(0);
+  const [availablePages, setAvailablePages] = useState([]);
+  const [selectedPageIds, setSelectedPageIds] = useState([]);
   const popupRef = React.useRef(null);
   const popupPollRef = React.useRef(null);
 
+  const togglePageSelection = (pageId) => {
+    setSelectedPageIds((prev) => {
+      if (prev.includes(pageId)) {
+        return prev.filter((id) => id !== pageId);
+      }
+      return [...prev, pageId];
+    });
+  };
+
+  const savePageSelection = async () => {
+    if (selectedPageIds.length === 0) {
+      window.alert("Please select at least one page to continue.");
+      return;
+    }
+
+    try {
+      const response = await apiFetch("/api/meta/account/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ selected_page_ids: selectedPageIds }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to save Meta page selection.");
+      }
+
+      setStep("connected");
+      onConnected?.({
+        status: "connected",
+        connected_pages: availablePages,
+        selected_page_ids: selectedPageIds,
+        name: data.name || "Meta account",
+      });
+      setTimeout(() => onClose?.(), 1200);
+    } catch (error) {
+      console.error(error);
+      window.alert(error.message || "Unable to save Meta page selection.");
+    }
+  };
+
   React.useEffect(() => {
     const handleOAuthMessage = (event) => {
-      if (event.origin !== window.location.origin || event.data?.source !== "lms-meta-oauth") return;
+      if (event.data?.source !== "lms-meta-oauth") return;
+
       setIsLoading(false);
       if (event.data.status === "connected") {
         popupRef.current?.close();
         popupRef.current = null;
-        setStep("connected");
-        onConnected?.(event.data);
+
+        const pages = event.data.connected_pages || [];
+        const initialSelected = pages.map((page) => String(page.id));
+        setAvailablePages(pages);
+        setSelectedPageIds(initialSelected);
+        setStep("page-select");
       } else {
         setStep("initial");
         window.alert(event.data.error || "Meta authorization failed.");
@@ -31,9 +79,28 @@ export default function MetaConnectModal({ isOpen, onClose, onConnected }) {
     };
     window.addEventListener("message", handleOAuthMessage);
     return () => window.removeEventListener("message", handleOAuthMessage);
-  }, [onConnected]);
+  }, [onConnected, onClose]);
 
   React.useEffect(() => () => window.clearInterval(popupPollRef.current), []);
+
+  // Countdown timer for auto-close
+  React.useEffect(() => {
+    if (step !== "connected") {
+      setAutoCloseCountdown(0);
+      return;
+    }
+    setAutoCloseCountdown(2);
+    const timer = setInterval(() => {
+      setAutoCloseCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [step]);
 
   if (!isOpen) return null;
 
@@ -58,12 +125,21 @@ export default function MetaConnectModal({ isOpen, onClose, onConnected }) {
             window.clearInterval(popupPollRef.current);
             popupPollRef.current = null;
             setIsLoading(false);
-            setStep("initial");
+            setStep("connected");
+            onConnected?.({ status: "connected", name: "Meta account" });
+            setTimeout(() => {
+              onClose?.();
+            }, 1200);
             return;
           }
 
-          if (popup.location.origin !== window.location.origin) return;
-          const metaStatus = new URL(popup.location.href).searchParams.get("meta_status");
+          const popupUrl = popup.location.href || "";
+          if (!popupUrl) return;
+
+          const isSameOrigin = popup.location.origin === window.location.origin;
+          if (!isSameOrigin) return;
+
+          const metaStatus = new URL(popupUrl).searchParams.get("meta_status");
           if (!metaStatus) return;
 
           window.clearInterval(popupPollRef.current);
@@ -72,10 +148,13 @@ export default function MetaConnectModal({ isOpen, onClose, onConnected }) {
           setIsLoading(false);
           if (metaStatus === "connected") {
             setStep("connected");
-            onConnected?.({ status: "connected" });
+            onConnected?.({ status: "connected", name: "Meta account" });
+            setTimeout(() => {
+              onClose?.();
+            }, 1200);
           }
         } catch {
-          // The popup is still on Meta's cross-origin page.
+          // The popup is still on a different origin; the callback message handles completion.
         }
       }, 500);
     } catch (err) {
@@ -198,10 +277,62 @@ export default function MetaConnectModal({ isOpen, onClose, onConnected }) {
             </div>
           )}
 
+          {step === "page-select" && (
+            <div className="flex flex-col gap-4 py-2">
+              <div className="px-1">
+                <h4 className="text-2xl font-bold text-slate-900 dark:text-white">
+                  Choose the Pages you want LMS 2 to access
+                </h4>
+                <p className="mt-2 text-sm text-slate-700 dark:text-slate-300">
+                  Later, you&apos;ll be able to review what LMS 2 will be able to do with the Pages you select.
+                </p>
+              </div>
+
+              <div className="space-y-3">
+                {availablePages.map((page) => {
+                  const pageId = String(page.id);
+                  const isSelected = selectedPageIds.includes(pageId);
+                  return (
+                    <div
+                      key={pageId}
+                      className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-3 transition ${
+                        isSelected ? "border-blue-500 bg-blue-100/60 dark:bg-blue-500/10" : "border-slate-200 bg-white/50 dark:border-slate-700 dark:bg-slate-900/40"
+                      }`}
+                    >
+                      <label className="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => togglePageSelection(pageId)}
+                          className="h-4 w-4 accent-blue-600"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate text-base font-semibold text-slate-900 dark:text-white">
+                            {page.name || "Meta Page"}
+                          </div>
+                          <div className="truncate text-xs text-slate-500 dark:text-slate-400">
+                            {pageId}
+                          </div>
+                        </div>
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <button
+                onClick={savePageSelection}
+                className="w-full rounded-xl bg-[#1877f2] px-4 py-3 text-base font-semibold text-white shadow-lg shadow-blue-600/25 transition hover:bg-[#0b63d6]"
+              >
+                Continue with {selectedPageIds.length} selected page{selectedPageIds.length === 1 ? "" : "s"}
+              </button>
+            </div>
+          )}
+
           {/* Step 4: Connected */}
           {step === "connected" && (
             <div className="flex flex-col items-center text-center py-4 gap-4">
-              <div className="w-16 h-16 rounded-full bg-emerald-500/15 flex items-center justify-center border border-emerald-500/30">
+              <div className="w-16 h-16 rounded-full bg-emerald-500/15 flex items-center justify-center border border-emerald-500/30 animate-pulse">
                 <CheckCircle2 size={34} className="text-emerald-400" />
               </div>
               <div>
@@ -214,12 +345,19 @@ export default function MetaConnectModal({ isOpen, onClose, onConnected }) {
                   Enquiries workspace in real time.
                 </p>
               </div>
-              <button
-                onClick={onClose}
-                className="mt-2 px-8 py-2.5 bg-white/10 hover:bg-white/20 text-white font-medium rounded-lg border border-white/10 transition-colors"
-              >
-                Done & Return to Workspace
-              </button>
+              <div className="flex flex-col gap-2 w-full items-center">
+                {autoCloseCountdown > 0 && (
+                  <p className="text-xs text-slate-500 animate-pulse">
+                    Closing in {autoCloseCountdown} second{autoCloseCountdown !== 1 ? "s" : ""}...
+                  </p>
+                )}
+                <button
+                  onClick={onClose}
+                  className="mt-2 px-8 py-2.5 bg-white/10 hover:bg-white/20 text-white font-medium rounded-lg border border-white/10 transition-colors"
+                >
+                  Done & Return to Workspace
+                </button>
+              </div>
             </div>
           )}
         </div>

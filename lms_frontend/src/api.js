@@ -26,6 +26,13 @@ export async function apiFetch(url, options = {}, canRetry = true) {
   const token = getAccessToken();
   if (token) headers.set("Authorization", `Bearer ${token}`);
 
+  const hasBody = typeof options.body !== "undefined" && options.body !== null;
+  const isFormData = typeof FormData !== "undefined" && options.body instanceof FormData;
+
+  if (!headers.has("Content-Type") && hasBody && !isFormData) {
+    headers.set("Content-Type", "application/json");
+  }
+
   const response = await fetch(url, { ...options, headers });
   if (response.status !== 401 || !canRetry) return response;
 

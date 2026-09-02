@@ -29,6 +29,8 @@ class Enquiry(models.Model):
     ad_set_name = models.CharField(max_length=255, blank=True, default='')
     ad_name = models.CharField(max_length=255, blank=True, default='')
     instant_form_name = models.CharField(max_length=255, blank=True, default='', db_index=True)
+    page_id = models.CharField(max_length=100, blank=True, default='', db_index=True)
+    page_name = models.CharField(max_length=255, blank=True, default='')
     meta_lead_id = models.CharField(max_length=100, blank=True, default='', db_index=True)
     
     # Raw Meta Form responses stored as JSON
