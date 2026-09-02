@@ -32,24 +32,38 @@ export default function Navbar({
   const [showProfile, setShowProfile] = useState(false);
   const [showMobileActions, setShowMobileActions] = useState(false);
   const [showMetaMenu, setShowMetaMenu] = useState(false);
-  const [isDisconnectingMeta, setIsDisconnectingMeta] = useState(false);
   const dropdownRef = useRef(null);
   const metaMenuRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+      const clickedInsideDropdown = dropdownRef.current?.contains(e.target);
+      const clickedInsideMetaMenu = metaMenuRef.current?.contains(e.target);
+
+      if (!clickedInsideDropdown) {
         setShowDropdown(false);
         setShowProfile(false);
-        setShowMobileActions(false);
       }
-      if (metaMenuRef.current && !metaMenuRef.current.contains(e.target)) {
+
+      if (!clickedInsideMetaMenu) {
         setShowMetaMenu(false);
       }
+
+      if (!clickedInsideDropdown && !clickedInsideMetaMenu) {
+        setShowMobileActions(false);
+      }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Close Meta menu when account is disconnected
+  useEffect(() => {
+    if (!metaAccount?.connected) {
+      setShowMetaMenu(false);
+    }
+  }, [metaAccount]);
 
   const userRole = currentUser?.role || "Employee";
   const isAdmin = userRole.toLowerCase() === "admin";
@@ -140,8 +154,12 @@ export default function Navbar({
                 <div className="p-1">
                   <button
                     onClick={() => {
-                      onOpenMetaModal();
-                      setShowMobileActions(false);
+                      if (metaAccount?.connected) {
+                        setShowMetaMenu(!showMetaMenu);
+                      } else {
+                        onOpenMetaModal();
+                        setShowMobileActions(false);
+                      }
                     }}
                     className="flex items-center gap-3 w-full px-1 py-2.5 rounded-lg text-[#94a3b8] hover:bg-[rgba(255,255,255,0.05)] hover:text-white transition-colors"
                   >
@@ -150,6 +168,21 @@ export default function Navbar({
                       {metaAccount?.connected ? metaAccount.name : "Connect Account"}
                     </span>
                   </button>
+
+                  {/* Meta Logout Option - Mobile */}
+                  {showMetaMenu && metaAccount?.connected && (
+                    <button
+                      onClick={async () => {
+                        setShowMetaMenu(false);
+                        setShowMobileActions(false);
+                        await onDisconnectMeta();
+                      }}
+                      className="flex items-center gap-3 w-full px-1 py-2 rounded-lg text-[12px] text-red-400 hover:bg-red-500/10 transition-colors ml-6"
+                    >
+                      <LogOut size={14} />
+                      Logout Meta
+                    </button>
+                  )}
                   <button
                     onClick={() => {
                       onOpenCreateModal();
@@ -285,36 +318,34 @@ export default function Navbar({
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center gap-1.5 md:gap-2">
           <div className="relative" ref={metaMenuRef}>
-          <button
-            onClick={() => {
-              if (metaAccount?.connected) {
-                setShowMetaMenu(!showMetaMenu);
-              } else {
-                onOpenMetaModal();
-              }
-            }}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg text-white text-sm font-medium hover:from-blue-600 hover:to-indigo-600 transition-all duration-200 shadow-lg shadow-blue-500/25"
-          >
-            <Share2 size={16} />
-            <span>{metaAccount?.connected ? metaAccount.name : "⚡ Connect Meta"}</span>
-          </button>
+            <button
+              onClick={() => {
+                if (metaAccount?.connected) {
+                  setShowMetaMenu(!showMetaMenu);
+                } else {
+                  onOpenMetaModal();
+                }
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-lg text-white text-sm font-medium hover:from-blue-600 hover:to-indigo-600 transition-all duration-200 shadow-lg shadow-blue-500/25"
+            >
+              <Share2 size={16} />
+              <span>{metaAccount?.connected ? metaAccount.name : "⚡ Connect Meta"}</span>
+            </button>
 
-          {showMetaMenu && metaAccount?.connected && (
-            <div className="absolute top-12 right-0 z-50 w-56 rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(11,15,25,0.98)] p-1 shadow-2xl">
-              <button
-                disabled={isDisconnectingMeta}
-                onClick={() => {
-                  setShowMetaMenu(false);
-                  setIsDisconnectingMeta(true);
-                  Promise.resolve(onDisconnectMeta()).finally(() => setIsDisconnectingMeta(false));
-                }}
-                className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-red-400 hover:bg-red-500/10 disabled:cursor-wait disabled:opacity-60"
-              >
-                <LogOut size={16} />
-                {isDisconnectingMeta ? "Disconnecting..." : "Logout Meta account"}
-              </button>
-            </div>
-          )}
+            {showMetaMenu && metaAccount?.connected && (
+              <div className="absolute top-12 right-0 z-50 w-52 rounded-xl border border-[rgba(255,255,255,0.08)] bg-[rgba(11,15,25,0.98)] p-1 shadow-2xl">
+                <button
+                  onClick={async () => {
+                    setShowMetaMenu(false);
+                    await onDisconnectMeta();
+                  }}
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-red-400 hover:bg-red-500/10"
+                >
+                  <LogOut size={16} />
+                  Logout Meta account
+                </button>
+              </div>
+            )}
           </div>
 
           <button

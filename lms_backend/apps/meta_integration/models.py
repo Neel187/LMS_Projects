@@ -7,6 +7,7 @@ class MetaAccount(models.Model):
     access_token = models.TextField()
     token_expires_at = models.DateTimeField(null=True, blank=True)
     connected_pages = models.JSONField(default=list, blank=True)
+    selected_page_ids = models.JSONField(default=list, blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

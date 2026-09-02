@@ -55,10 +55,6 @@ export default function App() {
     }
 
     if (metaStatus) {
-      localStorage.setItem("lms_meta_oauth_result", JSON.stringify({
-        status: metaStatus,
-        timestamp: Date.now(),
-      }));
       apiFetch("/api/meta/account/")
         .then(async (response) => {
           if (!response.ok) throw new Error("Unable to load the connected Meta account.");
@@ -69,7 +65,6 @@ export default function App() {
             setMetaAccount(account);
             showToast(`${account.name || "Meta account"} connected successfully.`);
             fetchEnquiries();
-            window.setTimeout(() => window.close(), 250);
           } else if (metaStatus === "error") {
             showToast("Meta authorization failed. Please try again.", "error");
           }
@@ -85,31 +80,39 @@ export default function App() {
     }
   }, []);
 
-  useEffect(() => {
-    const handleMetaStorageEvent = (event) => {
-      if (event.key !== "lms_meta_oauth_result" || !event.newValue) return;
-      const result = JSON.parse(event.newValue);
-      if (result.status !== "connected") return;
-
-      apiFetch("/api/meta/account/")
-        .then((response) => response.json())
-        .then((account) => {
-          if (!account.connected) return;
-          setMetaAccount(account);
-          showToast(`${account.name || "Meta account"} connected successfully.`);
-          fetchEnquiries();
-        })
-        .catch((error) => console.error("Unable to refresh Meta account:", error));
-    };
-
-    window.addEventListener("storage", handleMetaStorageEvent);
-    return () => window.removeEventListener("storage", handleMetaStorageEvent);
-  }, [currentUser]);
-
   const showToast = (message, type = "success") => {
     setToast({ message, type });
     window.setTimeout(() => setToast(null), 4000);
   };
+
+  useEffect(() => {
+    const handleOAuthMessage = async (event) => {
+      if (event.data?.source !== "lms-meta-oauth") return;
+
+      setIsMetaModalOpen(false);
+      const payload = event.data;
+
+      if (payload.status === "connected") {
+        try {
+          const data = await refreshMetaState();
+          const finalAccount = data?.connected ? data : { ...payload, connected: true };
+          setMetaAccount(finalAccount);
+          showToast(`${finalAccount.name || "Meta account"} connected successfully.`);
+          fetchEnquiries();
+        } catch (error) {
+          console.error(error);
+          showToast("Meta connected successfully.", "success");
+          fetchEnquiries();
+        }
+        return;
+      }
+
+      showToast(payload.error || "Meta authorization failed.", "error");
+    };
+
+    window.addEventListener("message", handleOAuthMessage);
+    return () => window.removeEventListener("message", handleOAuthMessage);
+  }, [currentUser]);
 
   const handleLoginSuccess = (user) => {
     setCurrentUser(user);
@@ -148,7 +151,19 @@ export default function App() {
     apiFetch(url)
       .then((res) => res.json())
       .then((data) => {
-        const allEnquiries = data.results || data;
+        let allEnquiries = data.results || data;
+
+        const selectedPageIds = metaAccount?.selected_page_ids?.length
+          ? metaAccount.selected_page_ids.map(String)
+          : (metaAccount?.connected_pages || []).map((page) => String(page.id));
+
+        if (selectedPageIds && selectedPageIds.length) {
+          allEnquiries = allEnquiries.filter((enquiry) => {
+            const pageId = enquiry.page_id || enquiry.raw_form_data?.page_id;
+            return pageId ? selectedPageIds.includes(String(pageId)) : true;
+          });
+        }
+
         setEnquiries(allEnquiries);
         computeTodaysActionCount(allEnquiries);
       })
@@ -221,40 +236,124 @@ export default function App() {
     if (currentUser) {
       apiFetch("/api/meta/account/")
         .then((response) => response.json())
-        .then((data) => setMetaAccount(data.connected ? data : null))
+        .then((data) => {
+          setMetaAccount(data.connected ? data : null);
+          if (data.connected) {
+            fetchEnquiries();
+          }
+        })
         .catch((err) => console.error(err));
     } else {
       setMetaAccount(null);
     }
   }, [currentUser]);
 
-  const handleMetaConnected = async (account) => {
-    setIsMetaModalOpen(false);
+  const refreshMetaState = async () => {
+    if (!currentUser) return null;
+
     try {
       const response = await apiFetch("/api/meta/account/");
       if (!response.ok) throw new Error("Unable to load the connected Meta account.");
-      const connectedAccount = await response.json();
-      setMetaAccount(connectedAccount.connected ? connectedAccount : { ...account, connected: true });
-      const importedMessage = account.imported_leads
-        ? ` ${account.imported_leads} existing lead${account.imported_leads === 1 ? "" : "s"} imported.`
-        : "";
-      showToast(`${connectedAccount.name || account.name || "Meta account"} connected successfully.${importedMessage}`);
+      const data = await response.json();
+      setMetaAccount(data.connected ? data : null);
+      if (data.connected) {
+        fetchEnquiries();
+      }
+      return data;
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  };
+
+  const syncMetaLeads = async () => {
+    try {
+      const response = await apiFetch("/api/meta/account/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sync_leads: true }),
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(data.error || "Unable to sync Meta leads.");
+      }
+
+      if (data.synced_leads > 0) {
+        fetchEnquiries();
+      }
+      return data;
+    } catch (error) {
+      console.error(error);
+      return null;
+    }
+  };
+
+  const handleMetaConnected = async (account) => {
+    setIsMetaModalOpen(false);
+    try {
+      const connectedAccount = await refreshMetaState();
+      const syncResult = await syncMetaLeads();
+      const finalAccount = connectedAccount?.connected ? connectedAccount : { ...account, connected: true };
+      setMetaAccount(finalAccount);
+      const importedMessage = syncResult?.synced_leads
+        ? ` ${syncResult.synced_leads} lead${syncResult.synced_leads === 1 ? "" : "s"} imported.`
+        : account.imported_leads
+          ? ` ${account.imported_leads} existing lead${account.imported_leads === 1 ? "" : "s"} imported.`
+          : "";
+      showToast(`${finalAccount.name || account.name || "Meta account"} connected successfully.${importedMessage}`);
     } catch (err) {
-      setMetaAccount({ ...account, connected: true });
+      const fallbackAccount = { ...account, connected: true };
+      setMetaAccount(fallbackAccount);
       showToast(`${account.name || "Meta account"} connected successfully.`);
       console.error(err);
     }
+
     fetchEnquiries();
   };
 
   const handleMetaDisconnect = async () => {
     try {
-      const response = await apiFetch("/api/meta/account/", { method: "DELETE" });
-      if (!response.ok) throw new Error("Unable to disconnect Meta account.");
+      console.log("🔴 Starting Meta account disconnect...");
+      
+      // Call the DELETE endpoint
+      const response = await apiFetch("/api/meta/account/", { 
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        }
+      });
+      
+      console.log("Response status:", response.status);
+      console.log("Response ok:", response.ok);
+      
+      // Check if response has content
+      const contentType = response.headers.get("content-type");
+      let data = {};
+      
+      if (contentType && contentType.includes("application/json")) {
+        try {
+          data = await response.json();
+          console.log("Response data:", data);
+        } catch (e) {
+          console.warn("Could not parse JSON response:", e);
+        }
+      }
+      
+      if (!response.ok) {
+        throw new Error(data.error || data.message || `Disconnect failed: ${response.status}`);
+      }
+      
+      // Update state
+      console.log("✅ Meta account disconnected successfully");
       setMetaAccount(null);
-      showToast("Meta account disconnected.");
+      showToast("Meta account disconnected successfully!", "success");
+      
     } catch (err) {
-      showToast(err.message, "error");
+      console.error("❌ Meta disconnect error:", err);
+      showToast(err.message || "Failed to disconnect Meta account. Please try again.", "error");
+      // Clear state anyway
+      setMetaAccount(null);
     }
   };
 
