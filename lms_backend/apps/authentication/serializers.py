@@ -101,6 +101,34 @@ class RegisterSerializer(serializers.Serializer):
         return User.objects.create_user(password=password, **validated_data)
 
 
+class EmployeeCreateSerializer(serializers.Serializer):
+    first_name = serializers.CharField(max_length=150)
+    last_name = serializers.CharField(max_length=150)
+    mobile = serializers.CharField(max_length=30)
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True, min_length=8)
+    is_active = serializers.BooleanField(default=True)
+
+    def validate_email(self, value):
+        if User.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError("An account with this email already exists.")
+        return value.lower()
+
+    def validate_mobile(self, value):
+        if User.objects.filter(mobile=value).exists():
+            raise serializers.ValidationError("An account with this mobile number already exists.")
+        return value
+
+    def create(self, validated_data):
+        company_id = self.context["company_id"]
+        return User.objects.create_user(
+            password=validated_data.pop("password"),
+            role=User.Role.EMPLOYEE,
+            company_id=company_id,
+            **validated_data,
+        )
+
+
 class LoginSerializer(serializers.Serializer):
     identifier = serializers.CharField()
     password = serializers.CharField(write_only=True)

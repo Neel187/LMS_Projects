@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { apiFetch } from "../api";
+import { updateMetaAccount, getMetaOAuthUrl } from "../api/metaApi";
 import {
   X,
   CheckCircle2,
@@ -34,11 +34,7 @@ export default function MetaConnectModal({ isOpen, onClose, onConnected }) {
     }
 
     try {
-      const response = await apiFetch("/api/meta/account/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ selected_page_ids: selectedPageIds }),
-      });
+      const response = await updateMetaAccount({ selected_page_ids: selectedPageIds });
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         throw new Error(data.error || "Unable to save Meta page selection.");
@@ -114,7 +110,7 @@ export default function MetaConnectModal({ isOpen, onClose, onConnected }) {
     setIsLoading(true);
     setStep("connecting");
     try {
-      const response = await apiFetch("/api/meta/oauth-url/");
+      const response = await getMetaOAuthUrl();
       const contentType = response.headers.get("content-type") || "";
       const data = contentType.includes("application/json") ? await response.json() : {};
       if (!response.ok || !data.meta_oauth_url) throw new Error(data.error || "Unable to start Meta authorization.");

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { FileText, Clock, Send, X } from "lucide-react";
-import { apiFetch } from "../api";
+import { addEnquiryNote, scheduleEnquiryFollowUp } from "../api/enquiriesApi";
 
 export default function QuickActionPopover({
   type,
@@ -28,19 +28,11 @@ export default function QuickActionPopover({
     if (!value.trim()) return;
     setIsSubmitting(true);
     try {
-      const endpoint =
-        type === "note"
-          ? `/api/enquiries/${enquiryId}/add_note/`
-          : `/api/enquiries/${enquiryId}/schedule_followup/`;
-
-      const payload =
-        type === "note" ? { note: value } : { follow_up_date: value };
-
-      await apiFetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      if (type === "note") {
+        await addEnquiryNote(enquiryId, value);
+      } else {
+        await scheduleEnquiryFollowUp(enquiryId, value);
+      }
 
       setIsSubmitting(false);
       if (onSaved) onSaved();

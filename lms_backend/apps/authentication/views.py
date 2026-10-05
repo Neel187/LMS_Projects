@@ -16,7 +16,14 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import UserProfile
-from .serializers import AccountSerializer, LoginSerializer, ProfileSerializer, RegisterSerializer
+from apps.enquiries.models import ActivityTimeline, Enquiry, EnquiryStatus
+from .serializers import (
+    AccountSerializer,
+    EmployeeCreateSerializer,
+    LoginSerializer,
+    ProfileSerializer,
+    RegisterSerializer,
+)
 
 
 def build_google_mobile(profile_sub: str) -> str:
@@ -42,6 +49,87 @@ class RegisterView(APIView):
             },
             status=status.HTTP_201_CREATED,
         )
+
+
+class EmployeeCreateView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        if request.user.role != User.Role.ADMIN:
+            return Response(
+                {"detail": "Only admins can create employees."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = EmployeeCreateSerializer(
+            data=request.data,
+            context={"company_id": request.user.company_id},
+        )
+        serializer.is_valid(raise_exception=True)
+        employee = serializer.save()
+        return Response(AccountSerializer(employee).data, status=status.HTTP_201_CREATED)
+
+
+class EmployeeManagementView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get_admin(self, request):
+        if request.user.role != User.Role.ADMIN:
+            return None
+        return request.user
+
+    def get_employee(self, request, employee_id):
+        admin = self.get_admin(request)
+        if admin is None:
+            return None
+        return User.objects.filter(
+            id=employee_id,
+            role=User.Role.EMPLOYEE,
+            company_id=admin.company_id,
+        ).first()
+
+    def employee_data(self, employee):
+        enquiries = Enquiry.objects.filter(primary_owner=employee)
+        total = enquiries.count()
+        completed = enquiries.filter(status=EnquiryStatus.CLOSED).count()
+        return {
+            **AccountSerializer(employee).data,
+            "progress": {
+                "total_enquiries": total,
+                "new": enquiries.filter(status=EnquiryStatus.NEW).count(),
+                "contacted": enquiries.filter(status=EnquiryStatus.CONTACTED).count(),
+                "qualified": enquiries.filter(status=EnquiryStatus.QUALIFIED).count(),
+                "closed": completed,
+                "lost": enquiries.filter(status=EnquiryStatus.LOST).count(),
+                "activity_count": ActivityTimeline.objects.filter(performed_by=employee).count(),
+                "completion_rate": round((completed / total) * 100) if total else 0,
+            },
+        }
+
+    def get(self, request):
+        admin = self.get_admin(request)
+        if admin is None:
+            return Response({"detail": "Only admins can view employees."}, status=status.HTTP_403_FORBIDDEN)
+
+        employees = User.objects.filter(
+            role=User.Role.EMPLOYEE,
+            company_id=admin.company_id,
+        ).order_by("first_name", "last_name")
+        return Response([self.employee_data(employee) for employee in employees])
+
+    def patch(self, request, employee_id):
+        employee = self.get_employee(request, employee_id)
+        if employee is None:
+            if self.get_admin(request) is None:
+                return Response({"detail": "Only admins can update employees."}, status=status.HTTP_403_FORBIDDEN)
+            return Response({"detail": "Employee not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if "is_active" not in request.data or not isinstance(request.data["is_active"], bool):
+            return Response({"is_active": "Provide a boolean value."}, status=status.HTTP_400_BAD_REQUEST)
+
+        employee.is_active = request.data["is_active"]
+        employee.save(update_fields=["is_active", "updated_at"])
+        return Response(self.employee_data(employee))
 
 
 class LoginView(APIView):

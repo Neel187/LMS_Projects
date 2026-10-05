@@ -13,7 +13,7 @@ import {
   Settings,
   ExternalLink,
 } from "lucide-react";
-import ContactEnquiriesModal from "./ContactEnquiriesModal";
+import ContactEnquiriesModal from "../components/ContactEnquiriesModal";
 import { getContacts } from "../api/contactsApi";
 
 // --- Constants ---

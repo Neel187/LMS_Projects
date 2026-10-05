@@ -11,7 +11,7 @@ import {
   Share2,
   Send,
 } from "lucide-react";
-import { apiFetch } from "../api";
+import { addEnquiryNote, scheduleEnquiryFollowUp } from "../api/enquiriesApi";
 
 // --- Helper Components ---
 const ActivityTimelineItem = ({ activity }) => (
@@ -70,11 +70,7 @@ export default function EnquiryDetailModal({ enquiry, onClose, onRefresh }) {
     if (!newNote.trim()) return;
     setIsSubmitting(true);
     try {
-      await apiFetch(`/api/enquiries/${enquiry.id}/add_note/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ note: newNote }),
-      });
+      await addEnquiryNote(enquiry.id, newNote);
       setNewNote("");
       setIsSubmitting(false);
       if (onRefresh) onRefresh();
@@ -89,11 +85,7 @@ export default function EnquiryDetailModal({ enquiry, onClose, onRefresh }) {
     if (!followUpDate) return;
     setIsSubmitting(true);
     try {
-      await apiFetch(`/api/enquiries/${enquiry.id}/schedule_followup/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ follow_up_date: followUpDate }),
-      });
+      await scheduleEnquiryFollowUp(enquiry.id, followUpDate);
       setFollowUpDate("");
       setIsSubmitting(false);
       if (onRefresh) onRefresh();

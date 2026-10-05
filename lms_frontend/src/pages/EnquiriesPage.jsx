@@ -15,7 +15,7 @@ import {
   Clock,
   StickyNote,
 } from "lucide-react";
-import QuickActionPopover from "./QuickActionPopover";
+import QuickActionPopover from "../components/QuickActionPopover";
 
 const STORAGE_KEY = "lms_enquiry_columns";
 

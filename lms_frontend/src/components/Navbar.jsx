@@ -18,6 +18,7 @@ export default function Navbar({
   onLogout,
   onOpenMetaModal,
   onOpenCreateModal,
+  onOpenEmployeeModal,
   searchTerm,
   setSearchTerm,
   todaysActionCount,
@@ -33,14 +34,16 @@ export default function Navbar({
   const [showMobileActions, setShowMobileActions] = useState(false);
   const [showMetaMenu, setShowMetaMenu] = useState(false);
   const dropdownRef = useRef(null);
+  const mobileDropdownRef = useRef(null);
   const metaMenuRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
       const clickedInsideDropdown = dropdownRef.current?.contains(e.target);
+      const clickedInsideMobileDropdown = mobileDropdownRef.current?.contains(e.target);
       const clickedInsideMetaMenu = metaMenuRef.current?.contains(e.target);
 
-      if (!clickedInsideDropdown) {
+      if (!clickedInsideDropdown && !clickedInsideMobileDropdown) {
         setShowDropdown(false);
         setShowProfile(false);
       }
@@ -49,7 +52,7 @@ export default function Navbar({
         setShowMetaMenu(false);
       }
 
-      if (!clickedInsideDropdown && !clickedInsideMetaMenu) {
+      if (!clickedInsideDropdown && !clickedInsideMobileDropdown && !clickedInsideMetaMenu) {
         setShowMobileActions(false);
       }
     };
@@ -116,8 +119,9 @@ export default function Navbar({
           </div>
 
           {/* Right: User Avatar with Quick Actions */}
-          <div className="relative flex" ref={dropdownRef}>
+          <div className="relative flex" ref={mobileDropdownRef}>
             <button
+              type="button"
               className="w-8 h-8 rounded-full bg-[#374151] flex items-center justify-center overflow-hidden ring-2 ring-[rgba(255,255,255,0.05)]"
               onClick={() => {
                 setShowMobileActions(!showMobileActions);
@@ -138,6 +142,7 @@ export default function Navbar({
 
             {/* Hamburger Menu Button */}
             <button
+              type="button"
               onClick={onToggleMobileMenu}
               className="p-1.5 rounded-lg hover:bg-[rgba(255,255,255,0.05)] transition-colors"
             >
@@ -150,9 +155,13 @@ export default function Navbar({
 
             {/* Mobile Quick Actions Dropdown */}
             {showMobileActions && (
-              <div className="absolute right-8 mt-8 w-45 bg-[rgba(11,15,25,0.98)] border border-[rgba(255,255,255,0.06)] rounded-xl shadow-2xl shadow-black/50 backdrop-blur-xl overflow-hidden z-50">
+              <div
+                className="absolute right-8 top-full mt-2 w-56 max-w-[calc(100vw-2rem)] bg-[rgba(11,15,25,0.98)] border border-[rgba(255,255,255,0.06)] rounded-xl shadow-2xl shadow-black/50 backdrop-blur-xl overflow-hidden z-[60] pointer-events-auto"
+                onPointerDown={(event) => event.stopPropagation()}
+              >
                 <div className="p-1">
                   <button
+                    type="button"
                     onClick={() => {
                       if (metaAccount?.connected) {
                         setShowMetaMenu(!showMetaMenu);
@@ -184,6 +193,7 @@ export default function Navbar({
                     </button>
                   )}
                   <button
+                    type="button"
                     onClick={() => {
                       onOpenCreateModal();
                       setShowMobileActions(false);
@@ -193,7 +203,21 @@ export default function Navbar({
                     <Plus size={18} className="text-emerald-400" />
                     <span className="text-[12px]">New Enquiry</span>
                   </button>
+                  {isAdmin && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onOpenEmployeeModal();
+                        setShowMobileActions(false);
+                      }}
+                      className="flex items-center gap-3 w-full px-1 py-2.5 rounded-lg text-[#94a3b8] hover:bg-[rgba(255,255,255,0.05)] hover:text-white transition-colors"
+                    >
+                      <Shield size={18} className="text-emerald-400" />
+                      <span className="text-[12px]">Add Employee</span>
+                    </button>
+                  )}
                   <button
+                    type="button"
                     onClick={() => {
                       onOpenTodaysActions();
                       setShowMobileActions(false);
@@ -210,6 +234,7 @@ export default function Navbar({
                   </button>
                   <div className="h-px bg-[rgba(255,255,255,0.06)] my-1" />
                   <button
+                    type="button"
                     onClick={() => {
                       setShowMobileActions(false);
                       onOpenProfile();
@@ -220,6 +245,7 @@ export default function Navbar({
                     <span className="text-[12px]">View Profile</span>
                   </button>
                   <button
+                    type="button"
                     onClick={() => {
                       setShowMobileActions(false);
                       onLogout();
@@ -356,6 +382,16 @@ export default function Navbar({
             <span>New Enquiry</span>
           </button>
 
+          {isAdmin && (
+            <button
+              onClick={onOpenEmployeeModal}
+              className="flex items-center gap-2 px-4 py-2 border border-emerald-500/30 rounded-lg text-emerald-300 text-sm font-medium hover:bg-emerald-500/10 transition-all duration-200"
+            >
+              <Shield size={16} />
+              <span>Add Employee</span>
+            </button>
+          )}
+
           <div className="w-px h-6 bg-[rgba(255,255,255,0.06)] mx-1" />
 
           <button
@@ -414,7 +450,7 @@ export default function Navbar({
               <div className="absolute right-0 mt-2 w-64 bg-[rgba(11,15,25,0.98)] border border-[rgba(255,255,255,0.06)] rounded-xl shadow-2xl shadow-black/50 backdrop-blur-xl overflow-hidden z-50">
                 <div className="p-4 border-b border-[rgba(255,255,255,0.06)]">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-full bg-[#374151] flex items-center justify-center overflow-hidden">
+                      <div className="w-9 h-9 rounded-full bg-[#374151] flex items-center justify-center overflow-hidden">
                       {currentUser?.avatar_url ? (
                         <img
                           src={currentUser.avatar_url}

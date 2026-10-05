@@ -10,7 +10,7 @@ import {
   MessageSquare,
   AlertCircle,
 } from "lucide-react";
-import { apiFetch } from "../api";
+import { searchEnquiries } from "../api/enquiriesApi";
 
 // --- Helper for Status Badge ---
 const StatusBadge = ({ status }) => {
@@ -80,10 +80,8 @@ export default function ContactEnquiriesModal({
     if (contact) {
       setLoading(true);
       // Use phone, email, or name to search for associated enquiries
-      const searchQuery = encodeURIComponent(
-        contact.phone || contact.email || contact.first_name,
-      );
-      apiFetch(`/api/enquiries/?search=${searchQuery}`)
+      const searchQuery = contact.phone || contact.email || contact.first_name;
+      searchEnquiries(searchQuery)
         .then((res) => res.json())
         .then((data) => {
           const results = data.results || data;
@@ -92,6 +90,7 @@ export default function ContactEnquiriesModal({
             (e) =>
               e.contact === contact.id ||
               e.contact_details?.phone === contact.phone,
+
           );
           setAssociatedEnquiries(filtered);
           setLoading(false);

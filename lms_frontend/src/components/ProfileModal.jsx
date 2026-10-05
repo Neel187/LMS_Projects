@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Calendar, Camera, Mail, Phone, Save, User, X } from "lucide-react";
-import { apiFetch } from "../api";
+import { getProfile, updateProfile } from "../api/authApi";
 
 export default function ProfileModal({ isOpen, onClose, onSaved, onToast }) {
   const [profile, setProfile] = useState(null);
@@ -14,7 +14,7 @@ export default function ProfileModal({ isOpen, onClose, onSaved, onToast }) {
   useEffect(() => {
     if (!isOpen) return;
     setIsLoading(true);
-    apiFetch("/api/auth/profile/")
+    getProfile()
       .then(async (response) => {
         if (!response.ok) throw new Error("Could not load profile");
         return response.json();
@@ -47,10 +47,7 @@ export default function ProfileModal({ isOpen, onClose, onSaved, onToast }) {
     if (photo) formData.append("photo", photo);
 
     try {
-      const response = await apiFetch("/api/auth/profile/", {
-        method: "PATCH",
-        body: formData,
-      });
+      const response = await updateProfile(formData);
       const data = await response.json();
       if (!response.ok) throw new Error(data.username?.[0] || "Could not save profile");
       setProfile(data);
