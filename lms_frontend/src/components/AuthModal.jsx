@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { X, Lock, Mail, Phone, ArrowRight } from "lucide-react";
+import { authenticate, startGoogleSignIn } from "../api/authApi";
 
 export default function AuthModal({ isOpen, onClose, onLoginSuccess, onToast }) {
   const [tab, setTab] = useState("login"); // 'login' or 'register'
@@ -19,7 +20,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, onToast }) 
   const handleGoogleSignIn = () => {
     setError("");
     setLoading(true);
-    window.location.assign("/api/auth/google/login/");
+    startGoogleSignIn();
   };
 
   const handleSubmit = async (e) => {
@@ -40,11 +41,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess, onToast }) 
         };
 
     try {
-      const response = await fetch(`/api/auth/${tab}/`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+      const response = await authenticate(tab, payload);
 
       const responseText = await response.text();
       let data = {};

@@ -13,8 +13,8 @@ import {
   Settings,
   ExternalLink,
 } from "lucide-react";
-import ContactEnquiriesModal from "./ContactEnquiriesModal";
-import { apiFetch } from "../api";
+import ContactEnquiriesModal from "../components/ContactEnquiriesModal";
+import { getContacts } from "../api/contactsApi";
 
 // --- Constants ---
 const STORAGE_KEY = "lms_contact_columns";
@@ -60,7 +60,7 @@ export default function ContactsView({ onSelectEnquiry }) {
 
   // Fetch Contacts
   useEffect(() => {
-    apiFetch("/api/contacts/")
+    getContacts()
       .then((res) => res.json())
       .then((data) => setContacts(data.results || data))
       .catch((err) => console.error("Error fetching contacts:", err));

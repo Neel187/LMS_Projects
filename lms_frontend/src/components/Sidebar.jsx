@@ -18,6 +18,7 @@ import {
 export default function Sidebar({
   activeTab,
   setActiveTab,
+  currentUser,
   currentFilter,
   setCurrentFilter,
   savedViews,
@@ -40,6 +41,10 @@ export default function Sidebar({
       badge: todaysActionCount,
     },
   ];
+
+  if (currentUser?.role?.toLowerCase() === "admin") {
+    navItems.push({ id: "employees", label: "Employee Management", icon: Users });
+  }
 
   const smartViews = [
     { id: "all", label: "All Enquiries", icon: FileText, filter: {} },

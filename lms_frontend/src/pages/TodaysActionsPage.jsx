@@ -8,7 +8,7 @@ import {
   RefreshCw,
   User,
 } from "lucide-react";
-import { apiFetch } from "../api";
+import { getEnquiries } from "../api/enquiriesApi";
 
 // --- Helper Components ---
 const ActionIcon = ({ type }) => {
@@ -58,7 +58,7 @@ export default function TodaysActions({ currentUser, onSelectEnquiry }) {
     if (!currentUser) return;
 
     setLoading(true);
-    apiFetch("/api/enquiries/?format=json")
+    getEnquiries()
       .then((res) => res.json())
       .then((data) => {
         const allEnquiries = data.results || data;

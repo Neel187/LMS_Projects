@@ -90,7 +90,8 @@ class EnquiryViewSet(viewsets.ModelViewSet):
             enquiry=enquiry,
             activity_type=ActivityType.ENQUIRY_CREATED,
             title="Enquiry Created",
-            description=f"Created enquiry for {contact}"
+            description=f"Created enquiry for {contact}",
+            performed_by=self.request.user if self.request.user.is_authenticated else None,
         )
 
     @action(detail=True, methods=['post'])
@@ -106,7 +107,8 @@ class EnquiryViewSet(viewsets.ModelViewSet):
                 enquiry=enquiry,
                 activity_type=ActivityType.STATUS_UPDATED,
                 title=f"Status changed to {new_status}",
-                description=f"Status updated from {old_status} to {new_status}"
+                description=f"Status updated from {old_status} to {new_status}",
+                performed_by=request.user if request.user.is_authenticated else None,
             )
             return Response(EnquirySerializer(enquiry).data)
         return Response({'error': 'Invalid status'}, status=status.HTTP_400_BAD_REQUEST)
@@ -123,7 +125,8 @@ class EnquiryViewSet(viewsets.ModelViewSet):
                 enquiry=enquiry,
                 activity_type=ActivityType.NOTE_ADDED,
                 title="Note Added",
-                description=note
+                description=note,
+                performed_by=request.user if request.user.is_authenticated else None,
             )
             return Response(EnquirySerializer(enquiry).data)
         return Response({'error': 'Note text required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -140,7 +143,8 @@ class EnquiryViewSet(viewsets.ModelViewSet):
                 enquiry=enquiry,
                 activity_type=ActivityType.FOLLOWUP_SCHEDULED,
                 title="Follow-up Scheduled",
-                description=f"Scheduled for {follow_up_date}"
+                description=f"Scheduled for {follow_up_date}",
+                performed_by=request.user if request.user.is_authenticated else None,
             )
             return Response(EnquirySerializer(enquiry).data)
         return Response({'error': 'Follow-up date required'}, status=status.HTTP_400_BAD_REQUEST)

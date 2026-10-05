@@ -22,6 +22,7 @@ class ActivityTimelineSerializer(serializers.ModelSerializer):
         fields = ['id', 'enquiry', 'activity_type', 'title', 'description', 'performed_by', 'performed_by_name', 'created_at']
 
 class EnquirySerializer(serializers.ModelSerializer):
+    contact = serializers.PrimaryKeyRelatedField(read_only=True)
     contact_details = ContactSerializer(source='contact', read_only=True)
     primary_owner_details = UserSerializer(source='primary_owner', read_only=True)
     secondary_owner_details = UserSerializer(source='secondary_owners', many=True, read_only=True)

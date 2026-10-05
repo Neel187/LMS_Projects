@@ -7,7 +7,7 @@ import {
   ArrowUpRight,
   BarChart3,
 } from "lucide-react";
-import { apiFetch } from "../api";
+import { getDashboardStats } from "../api/reportsApi";
 
 // Reusable KPI Card Component
 const KPICard = ({
@@ -71,7 +71,7 @@ export default function DashboardView() {
 
   useEffect(() => {
     setIsLoading(true);
-    apiFetch("/api/dashboard/stats/")
+    getDashboardStats()
       .then((res) => res.json())
       .then((data) => {
         setStats(data);
@@ -116,7 +116,7 @@ export default function DashboardView() {
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto pr-1 space-y-6 pb-6">
-          {/* ✅ FIXED: Header Section is now INSIDE the scrollable container, so it scrolls away naturally on mobile */}
+          {/* FIXED: Header Section is now INSIDE the scrollable container, so it scrolls away naturally on mobile */}
           <div className="flex-shrink-0">
             <h2 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-white to-blue-400 bg-clip-text text-transparent">
               Executive Lead Analytics & Campaign Overview

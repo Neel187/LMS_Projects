@@ -16,7 +16,7 @@ import {
   Lock,
   Globe,
 } from "lucide-react";
-import AuthModal from "./AuthModal";
+import AuthModal from "../components/AuthModal";
 
 export default function LandingPage({ onLoginSuccess, onToast }) {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
